@@ -5,34 +5,44 @@
 #include <stdio.h>
 #include <math.h>
 
-const GLchar * src_shader_vertex = \
-"#version 450 core\n"
-"void main(void)\n"
-"{\n"
-"	const vec4 vertices[3] = vec4[3] (\n"
-"	 vec4( 0.25, -0.25, 0.5, 1.0),\n"
-"	 vec4(-0.25, -0.25, 0.5, 1.0),\n"
-"	 vec4( 0.25,  0.25, 0.5, 1.0)\n"
-"	);\n"
-"	gl_Position = vertices[gl_VertexID];\n"
-"}\n";
+#include <signal.h>
 
-const GLchar * src_shader_fragment = \
-"#version 450 core\n"
-"out vec4 color;\n"
-"void main(void)\n"
-"{\n"
-"	color = vec4(0.0f, 0.8f, 1.0f, 1.0f);\n"
-"}\n";
+char *
+file_read(const char * path)
+{
+	FILE * fh = fopen(path, "r");
+	if (fh == NULL) {
+		fprintf(stderr, "COULD NOT OPEN FILE %s\n.", path);
+		return NULL;
+	}
+
+	fseek(fh, 0, SEEK_END);
+
+	size_t size_string = ftell(fh);
+	rewind(fh);
+
+	char * data = malloc(size_string);
+	if (data == NULL) {
+		fprintf(stderr, "COULD NOT ALLOCATE DATA\n.");
+		return NULL;
+	}
+
+	fread(data, 1, size_string, fh);
+	fclose(fh);
+	return data;
+}
 
 GLuint
 shaders_compile(void)
 {
 	GLint success = GL_FALSE;
 
+	char * src_shader_vertex = file_read("src/shaders/shader.vert");
+	char * src_shader_fragment = file_read("src/shaders/shader.frag");
+
 	// Create and compile vertex shader.
 	GLuint shader_vertex = glCreateShader(GL_VERTEX_SHADER);
-	glShaderSource(shader_vertex, 1, &src_shader_vertex, NULL);
+	glShaderSource(shader_vertex, 1, (const char **)(&src_shader_vertex), NULL);
 	glCompileShader(shader_vertex);
 	glGetShaderiv(shader_vertex, GL_COMPILE_STATUS, &success);
 	if (!success) {
@@ -41,7 +51,7 @@ shaders_compile(void)
 
 	// Create and compile fragment shader.
 	GLuint shader_fragment = glCreateShader(GL_FRAGMENT_SHADER);
-	glShaderSource(shader_fragment, 1, &src_shader_fragment, NULL);
+	glShaderSource(shader_fragment, 1, (const char **)(&src_shader_fragment), NULL);
 	glCompileShader(shader_fragment);
 	glGetShaderiv(shader_fragment, GL_COMPILE_STATUS, &success);
 	if (!success) {
@@ -57,6 +67,9 @@ shaders_compile(void)
 	// Delete the shaders as the program has them now.
 	glDeleteShader(shader_fragment);
 	glDeleteShader(shader_vertex);
+
+  free(src_shader_vertex);
+  free(src_shader_fragment);
 
 	return program;
 }
