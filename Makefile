@@ -1,7 +1,7 @@
 
 DEPS := \
 	glfw/src/libglfw3.a \
-	glad/GL/src/glad.c
+	obj/glad.o
 
 INCLUDES := -Iglad/GL/include -Iglfw/include
 
@@ -22,8 +22,12 @@ glfw/src/libglfw3.a :
 	cd glfw && git checkout latest
 	cmake . && make
 
+obj/glad.o : glad/GL/src/glad.c | obj
+	gcc -c $^ ${INCLUDES}
+	mv glad.o $@
+
 bin/% : src/%.c ${DEPS}
 	gcc $^ -o $@ ${FLAGS}
 
-bin:
+bin obj:
 	mkdir $@
