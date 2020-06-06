@@ -11,8 +11,8 @@ int main(void)
 	if (!glfwInit())
 		exit(EXIT_FAILURE);
 
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 5);
 
 	window = glfwCreateWindow(640, 480, "Simple example", NULL, NULL);
 	if (!window)
@@ -25,9 +25,12 @@ int main(void)
 	gladLoadGL();
 	glfwSwapInterval(1);
 
+	GLfloat red[] = { 1.0f, 0.0f, 0.0f, 1.0f };
 	while (!glfwWindowShouldClose(window))
 	{
+		glClearBufferfv(GL_COLOR, 0, red);
 		glfwPollEvents();
+		glfwSwapBuffers(window);
 	}
 
 	glfwDestroyWindow(window);
