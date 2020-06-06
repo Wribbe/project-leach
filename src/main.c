@@ -4,6 +4,21 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+const char * src_shader_vertex = \
+"#version 450 core"
+"void main(void)"
+"{"
+"	gl_Position = vec4(0.0f, 0.0f, 0.5f, 1.0f);"
+"}";
+
+const char * src_shader_fragment = \
+"#version 450 core"
+"out vec4 color;"
+"void main(void)"
+"{"
+"	color = vec4(0.0f, 0.8f, 1.0f, 1.0f);"
+"}";
+
 int main(void)
 {
 	GLFWwindow* window;
