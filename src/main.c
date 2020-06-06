@@ -9,7 +9,12 @@ const GLchar * src_shader_vertex = \
 "#version 450 core\n"
 "void main(void)\n"
 "{\n"
-"	gl_Position = vec4(0.0f, 0.0f, 0.5f, 1.0f);\n"
+"	const vec4 vertices[3] = vec4[3] (\n"
+"	 vec4( 0.25, -0.25, 0.5, 1.0),\n"
+"	 vec4(-0.25, -0.25, 0.5, 1.0),\n"
+"	 vec4( 0.25,  0.25, 0.5, 1.0)\n"
+"	);\n"
+"	gl_Position = vertices[gl_VertexID];\n"
 "}\n";
 
 const GLchar * src_shader_fragment = \
@@ -67,7 +72,7 @@ render(double time_current, GLuint program)
 	};
 	glClearBufferfv(GL_COLOR, 0, color);
 	glUseProgram(program);
-	glDrawArrays(GL_POINTS, 0, 1);
+	glDrawArrays(GL_TRIANGLES, 0, 3);
 }
 
 int main(void)
@@ -96,7 +101,6 @@ int main(void)
 	glCreateVertexArrays(1, &VAO);
 	glBindVertexArray(VAO);
 
-	glPointSize(40.0f);
 	while (!glfwWindowShouldClose(window))
 	{
 		glfwPollEvents();
