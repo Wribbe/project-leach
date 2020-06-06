@@ -6,7 +6,7 @@ DEPS := \
 INCLUDES := -Iglad/GL/include -Iglfw/include
 
 FLAGS_GLFW := $(shell pkg-config --static --libs glfw/src/glfw3.pc)
-FLAGS := -ldl -Wpedantic -Wall -Wextra ${INCLUDES} -std=c11 ${FLAGS_GLFW}
+FLAGS := -g -ldl -Wpedantic -Wall -Wextra ${INCLUDES} -std=c11 ${FLAGS_GLFW} -lm
 
 SRCS := $(wildcard src/*.c)
 BINS := $(foreach s,${SRCS},$(patsubst src/%.c,bin/%,$s))
