@@ -11,7 +11,7 @@ FLAGS := -g -ldl -Wpedantic -Wall -Wextra ${INCLUDES} -std=c11 ${FLAGS_GLFW} -lm
 SRCS := $(wildcard src/*.c)
 BINS := $(foreach s,${SRCS},$(patsubst src/%.c,bin/%,$s))
 
-all: ${DEPS} ${BINS} | bin
+all: ${DEPS} ${BINS}
 
 glad/GL/src/glad.c :
 	git clone https://github.com/Dav1dde/glad
@@ -25,7 +25,7 @@ obj/glad.o : glad/GL/src/glad.c | obj
 	gcc -c $^ ${INCLUDES}
 	mv glad.o $@
 
-bin/% : src/%.c ${DEPS}
+bin/% : src/%.c ${DEPS} | bin
 	gcc $^ -o $@ ${FLAGS}
 
 bin obj:
