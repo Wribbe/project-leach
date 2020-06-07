@@ -19,8 +19,7 @@ glad/GL/src/glad.c :
 
 glfw/src/libglfw3.a :
 	git clone https://github.com/glfw/glfw
-	cd glfw && git checkout latest
-	cmake . && make
+	cd glfw && git checkout latest && cmake . && make
 
 obj/glad.o : glad/GL/src/glad.c | obj
 	gcc -c $^ ${INCLUDES}
