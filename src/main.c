@@ -6,6 +6,7 @@
 #include <math.h>
 
 #include <signal.h>
+#include <cglm/cglm.h>
 
 char *
 file_read(const char * path)

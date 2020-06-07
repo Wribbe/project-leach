@@ -1,9 +1,10 @@
 
 DEPS := \
 	glfw/src/libglfw3.a \
-	obj/glad.o
+	obj/glad.o \
+	cglm
 
-INCLUDES := -Iglad/GL/include -Iglfw/include
+INCLUDES := -Iglad/GL/include -Iglfw/include -Icglm/include
 
 #FLAGS_GLFW := $(shell pkg-config --static --libs glfw/src/glfw3.pc)
 FLAGS_GLFW := -L/usr/local/lib -lrt -lm -ldl -lX11 -lpthread -lxcb -lXau -lXdmcp
@@ -26,8 +27,11 @@ obj/glad.o : glad/GL/src/glad.c | obj
 	gcc -c $^ ${INCLUDES}
 	mv glad.o $@
 
+cglm:
+	git clone https://github.com/recp/cglm
+
 bin/% : src/%.c ${DEPS} | bin
-	gcc $^ -o $@ ${FLAGS}
+	gcc $(filter %.o %.a %.c,$^) -o $@ ${FLAGS}
 
 bin obj:
 	mkdir $@
