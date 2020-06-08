@@ -8,6 +8,14 @@
 #include <signal.h>
 #include <cglm/cglm.h>
 
+#define NUM_OBJECTS 256
+
+float OBJ_X[NUM_OBJECTS] = {0};
+float OBJ_Y[NUM_OBJECTS] = {0};
+float OBJ_Z[NUM_OBJECTS] = {0};
+
+GLboolean OBJ_FLAG_GRAVITY[NUM_OBJECTS] = {GL_TRUE};
+
 char *
 file_read(const char * path)
 {
@@ -65,6 +73,12 @@ shaders_compile(void)
   glAttachShader(program, shader_fragment);
   glLinkProgram(program);
 
+  // Did it link?
+  glGetShaderiv(shader_fragment, GL_LINK_STATUS, &success);
+  if (!success) {
+    fprintf(stderr, "Program failed to link.\n");
+  }
+
   // Delete the shaders as the program has them now.
   glDeleteShader(shader_fragment);
   glDeleteShader(shader_vertex);
@@ -76,7 +90,7 @@ shaders_compile(void)
 }
 
 void
-render(GLuint VAO, double time_current, GLuint program)
+render(GLuint VAO, double time_current, GLuint program, mat4 mvp)
 {
   GLfloat color[] = {
     sinf(time_current) * 0.5f + 0.5f,
@@ -85,8 +99,13 @@ render(GLuint VAO, double time_current, GLuint program)
     1.0f,
   };
   glClearBufferfv(GL_COLOR, 0, color);
+
   glUseProgram(program);
   glBindVertexArray(VAO);
+
+  GLuint uloc_mvp = glGetUniformLocation(program, "mvp");
+  glUniformMatrix4fv(uloc_mvp, 1, GL_TRUE, mvp[0]);
+
   glDrawArrays(GL_TRIANGLES, 0, 3);
 }
 
@@ -130,10 +149,21 @@ int main(void)
   glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3*sizeof(float), (void*)0);
   glEnableVertexAttribArray(0);
 
+  mat4 m4_model = GLM_MAT4_IDENTITY_INIT;
+  mat4 m4_view = GLM_MAT4_IDENTITY_INIT;
+  mat4 m4_perspective = GLM_MAT4_IDENTITY_INIT;
+  mat4 m4_mvp = GLM_MAT4_IDENTITY_INIT;
+
+  glm_perspective(40.0f, 1.0f, 1.0f, 100.0f, m4_perspective);
+  vec3 up = {0.0f, 1.0f, 0.0f};
+  glm_lookat((vec3){0.0f, 0.0f, 3.0f}, (vec3){0.0f, 0.0f, 0.0f}, up, m4_view);
+
+  glm_mat4_mulN((mat4 *[]){&m4_perspective, &m4_view, &m4_model}, 3, m4_mvp);
+
   while (!glfwWindowShouldClose(window))
   {
     glfwPollEvents();
-    render(VAO, glfwGetTime(), program_render);
+    render(VAO, glfwGetTime(), program_render, m4_mvp);
     glfwSwapBuffers(window);
   }
 
