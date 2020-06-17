@@ -9,12 +9,37 @@
 #include <cglm/cglm.h>
 
 #define NUM_OBJECTS 256
+#define UNUSED(x) (void)(x)
 
 float OBJ_X[NUM_OBJECTS] = {0};
 float OBJ_Y[NUM_OBJECTS] = {0};
 float OBJ_Z[NUM_OBJECTS] = {0};
 
 GLboolean OBJ_FLAG_GRAVITY[NUM_OBJECTS] = {GL_TRUE};
+
+struct key {
+  GLboolean down;
+};
+
+struct key keys[GLFW_KEY_LAST] = {0};
+
+void
+callback_key(GLFWwindow * window, int key, int scancode, int action, int mods)
+{
+  UNUSED(window);
+
+  if (action == GLFW_REPEAT) {
+    return;
+  }
+
+  printf("key: %d, mods %d, action: %d scancode:%d\n", key, mods, action, scancode);
+
+  if (action == GLFW_PRESS) {
+    keys[key].down = GL_TRUE;
+  } else {
+    keys[key].down = GL_FALSE;
+  }
+}
 
 char *
 file_read(const char * path)
@@ -130,6 +155,8 @@ int main(void)
   gladLoadGL();
   glfwSwapInterval(1);
 
+  glfwSetKeyCallback(window, callback_key);
+
   GLuint program_render = shaders_compile();
   GLuint VAO = 0;
   glGenVertexArrays(1, &VAO);
@@ -156,13 +183,15 @@ int main(void)
 
   glm_perspective(40.0f, 1.0f, 1.0f, 100.0f, m4_perspective);
   vec3 up = {0.0f, 1.0f, 0.0f};
-  glm_lookat((vec3){0.0f, 0.0f, 3.0f}, (vec3){0.0f, 0.0f, 0.0f}, up, m4_view);
+  float camera_z = 3.0f;
 
-  glm_mat4_mulN((mat4 *[]){&m4_perspective, &m4_view, &m4_model}, 3, m4_mvp);
 
   while (!glfwWindowShouldClose(window))
   {
     glfwPollEvents();
+    glm_lookat((vec3){0.0f, 0.0f, camera_z}, (vec3){0.0f, 0.0f, 0.0f}, up, m4_view);
+    camera_z-= 0.01f;
+    glm_mat4_mulN((mat4 *[]){&m4_perspective, &m4_view, &m4_model}, 3, m4_mvp);
     render(VAO, glfwGetTime(), program_render, m4_mvp);
     glfwSwapBuffers(window);
   }
