@@ -131,7 +131,7 @@ render(GLuint VAO, double time_current, GLuint program, mat4 mvp)
   GLuint uloc_mvp = glGetUniformLocation(program, "mvp");
   glUniformMatrix4fv(uloc_mvp, 1, GL_TRUE, mvp[0]);
 
-  glDrawArrays(GL_TRIANGLES, 0, 3);
+  glDrawArrays(GL_TRIANGLES, 0, 6);
 }
 
 int main(void)
@@ -166,6 +166,10 @@ int main(void)
     -0.5f, -0.5f, 0.0f,
      0.5f, -0.5f, 0.0f,
      0.0f,  0.5f, 0.0f,
+
+     0.0f, -0.5f,-0.5f,
+     0.0f, -0.5f, 0.5f,
+     0.0f,  0.5f, 0.0f,
   };
 
   GLuint VBO = 0;
@@ -185,12 +189,12 @@ int main(void)
 
   vec3 dir_up = {0.0f, 1.0f, 0.0f};
   vec3 dir_camera = {0.0f, 0.0f, 0.0f};
-  vec3 dir_axis_x = {1.0f, 0.0f, 0.0f};
 
   vec3 pos_camera = {0.0f, 0.0f, 1.0f};
   vec3 pos_lookat = {0.0f, 0.0f, 0.0f};
 
   float camera_speed = 0.10f;
+  float angle_current = 3*M_PI/4;
 
   while (!glfwWindowShouldClose(window)) {
 
@@ -201,8 +205,16 @@ int main(void)
     float radius = glm_vec3_norm(dir_camera);
     float camera_angel_add = camera_speed / radius;
 
-    float angle_current = glm_vec3_angle(dir_camera, dir_axis_x);
-    float angle_new = 0;
+    if (key_down[GLFW_KEY_A]) {
+      angle_current += camera_angel_add;
+      pos_camera[0] = radius * cosf(angle_current);
+      pos_camera[2] = radius * -sinf(angle_current);
+    }
+    if (key_down[GLFW_KEY_D]) {
+      angle_current -= camera_angel_add;
+      pos_camera[0] = radius * cosf(angle_current);
+      pos_camera[2] = radius * -sinf(angle_current);
+    }
 
     if (key_down[GLFW_KEY_W]) {
       pos_camera[2] -= camera_speed;
@@ -210,49 +222,17 @@ int main(void)
     if (key_down[GLFW_KEY_S]) {
       pos_camera[2] += camera_speed;
     }
-    if (key_down[GLFW_KEY_A]) {
-      printf("A\n");
-      angle_new = angle_current + camera_angel_add;
-      pos_camera[0] = radius *  cosf(angle_new);
-      pos_camera[2] = radius * -sinf(angle_new);
-      key_down[GLFW_KEY_A] = GL_FALSE;
+    if (angle_current > 2*M_PI) {
+      angle_current -= 2*M_PI;
+    } else if ( angle_current < -2*M_PI) {
+      angle_current += 2*M_PI;
     }
-    if (key_down[GLFW_KEY_D]) {
-      printf("D\n");
-      angle_new = angle_current - camera_angel_add;
-      pos_camera[0] = radius *  cosf(angle_new);
-      pos_camera[2] = radius * -sinf(angle_new);
-      key_down[GLFW_KEY_D] = GL_FALSE;
-    }
-    if (angle_new) {
 
-      printf("Dir camera: ");
-      printf("%.2f ", dir_camera[0]);
-      printf("%.2f ", dir_camera[1]);
-      printf("%.2f ", dir_camera[2]);
-      printf("\n");
-      printf("Pos camera: ");
-      printf("%.2f ", pos_camera[0]);
-      printf("%.2f ", pos_camera[1]);
-      printf("%.2f ", pos_camera[2]);
-      printf("\n");
-      printf("angle_current: %f\n", angle_current);
-      printf("angle_add: %f\n", camera_angel_add);
-      printf("angle_new: %f\n", angle_new);
-      printf("radius: %f\n", radius);
-//      printf("angle_current: %f, dir_camera: {%.2f,%.2f,%.2f}, add: %f, angle_new: %f\n",
-//          angle_current,
-//          dir_camera[0],
-//          dir_camera[1],
-//          dir_camera[2],
-//          camera_angel_add,
-//          angle_new
-//      );
-    }
     glm_lookat(pos_camera, pos_lookat, dir_up, m4_view);
-
     glm_mat4_mulN((mat4 *[]){&m4_perspective, &m4_view, &m4_model}, 3, m4_mvp);
+
     render(VAO, glfwGetTime(), program_render, m4_mvp);
+
     glfwSwapBuffers(window);
   }
 
