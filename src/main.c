@@ -8,6 +8,8 @@
 #include <signal.h>
 #include <cglm/cglm.h>
 
+#define M_PI 3.14159265358979323846
+
 #define NUM_OBJECTS 256
 #define UNUSED(x) (void)(x)
 
@@ -17,27 +19,25 @@ float OBJ_Z[NUM_OBJECTS] = {0};
 
 GLboolean OBJ_FLAG_GRAVITY[NUM_OBJECTS] = {GL_TRUE};
 
-struct key {
-  GLboolean down;
-};
-
-struct key keys[GLFW_KEY_LAST] = {0};
+GLboolean key_down[GLFW_KEY_LAST] = {0};
 
 void
 callback_key(GLFWwindow * window, int key, int scancode, int action, int mods)
 {
   UNUSED(window);
+  UNUSED(scancode);
+  UNUSED(mods);
 
   if (action == GLFW_REPEAT) {
     return;
   }
 
-  printf("key: %d, mods %d, action: %d scancode:%d\n", key, mods, action, scancode);
+//  printf("key: %d, mods %d, action: %d scancode:%d\n", key, mods, action, scancode);
 
   if (action == GLFW_PRESS) {
-    keys[key].down = GL_TRUE;
+    key_down[key] = GL_TRUE;
   } else {
-    keys[key].down = GL_FALSE;
+    key_down[key] = GL_FALSE;
   }
 }
 
@@ -182,15 +182,75 @@ int main(void)
   mat4 m4_mvp = GLM_MAT4_IDENTITY_INIT;
 
   glm_perspective(40.0f, 1.0f, 1.0f, 100.0f, m4_perspective);
-  vec3 up = {0.0f, 1.0f, 0.0f};
-  float camera_z = 3.0f;
 
+  vec3 dir_up = {0.0f, 1.0f, 0.0f};
+  vec3 dir_camera = {0.0f, 0.0f, 0.0f};
+  vec3 dir_axis_x = {1.0f, 0.0f, 0.0f};
 
-  while (!glfwWindowShouldClose(window))
-  {
+  vec3 pos_camera = {0.0f, 0.0f, 1.0f};
+  vec3 pos_lookat = {0.0f, 0.0f, 0.0f};
+
+  float camera_speed = 0.10f;
+
+  while (!glfwWindowShouldClose(window)) {
+
     glfwPollEvents();
-    glm_lookat((vec3){0.0f, 0.0f, camera_z}, (vec3){0.0f, 0.0f, 0.0f}, up, m4_view);
-    camera_z-= 0.01f;
+
+    glm_vec3_sub(pos_lookat, pos_camera, dir_camera);
+
+    float radius = glm_vec3_norm(dir_camera);
+    float camera_angel_add = camera_speed / radius;
+
+    float angle_current = glm_vec3_angle(dir_camera, dir_axis_x);
+    float angle_new = 0;
+
+    if (key_down[GLFW_KEY_W]) {
+      pos_camera[2] -= camera_speed;
+    }
+    if (key_down[GLFW_KEY_S]) {
+      pos_camera[2] += camera_speed;
+    }
+    if (key_down[GLFW_KEY_A]) {
+      printf("A\n");
+      angle_new = angle_current + camera_angel_add;
+      pos_camera[0] = radius *  cosf(angle_new);
+      pos_camera[2] = radius * -sinf(angle_new);
+      key_down[GLFW_KEY_A] = GL_FALSE;
+    }
+    if (key_down[GLFW_KEY_D]) {
+      printf("D\n");
+      angle_new = angle_current - camera_angel_add;
+      pos_camera[0] = radius *  cosf(angle_new);
+      pos_camera[2] = radius * -sinf(angle_new);
+      key_down[GLFW_KEY_D] = GL_FALSE;
+    }
+    if (angle_new) {
+
+      printf("Dir camera: ");
+      printf("%.2f ", dir_camera[0]);
+      printf("%.2f ", dir_camera[1]);
+      printf("%.2f ", dir_camera[2]);
+      printf("\n");
+      printf("Pos camera: ");
+      printf("%.2f ", pos_camera[0]);
+      printf("%.2f ", pos_camera[1]);
+      printf("%.2f ", pos_camera[2]);
+      printf("\n");
+      printf("angle_current: %f\n", angle_current);
+      printf("angle_add: %f\n", camera_angel_add);
+      printf("angle_new: %f\n", angle_new);
+      printf("radius: %f\n", radius);
+//      printf("angle_current: %f, dir_camera: {%.2f,%.2f,%.2f}, add: %f, angle_new: %f\n",
+//          angle_current,
+//          dir_camera[0],
+//          dir_camera[1],
+//          dir_camera[2],
+//          camera_angel_add,
+//          angle_new
+//      );
+    }
+    glm_lookat(pos_camera, pos_lookat, dir_up, m4_view);
+
     glm_mat4_mulN((mat4 *[]){&m4_perspective, &m4_view, &m4_model}, 3, m4_mvp);
     render(VAO, glfwGetTime(), program_render, m4_mvp);
     glfwSwapBuffers(window);
