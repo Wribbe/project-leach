@@ -200,53 +200,21 @@ int main(void)
 
     glfwPollEvents();
 
-//    glm_vec3_sub(pos_lookat, pos_camera, dir_camera);
-
-//    float radius = glm_vec3_norm(dir_camera);
-//    float camera_angel_add = speed_camera / radius;
-
     if (key_down[GLFW_KEY_A]) {
-//      angle_current += camera_angel_add;
-//      pos_camera[0] = radius * cosf(angle_current);
-//      pos_camera[2] = radius * -sinf(angle_current);
-//      pos_camera[0] -= speed_camera;
-      glm_translate_x(m4_model, speed_camera);
-//      m4_model[0][3] -= speed_camera;
+      pos_camera[0] -= speed_camera;
     }
     if (key_down[GLFW_KEY_D]) {
-//      angle_current -= camera_angel_add;
-//      pos_camera[0] = radius * cosf(angle_current);
-//      pos_camera[2] = radius * -sinf(angle_current);
-//      pos_camera[0] += speed_camera;
-      glm_translate_x(m4_model, -speed_camera);
-//      m4_model[0][3] += speed_camera;
+      pos_camera[0] += speed_camera;
     }
 
     if (key_down[GLFW_KEY_W]) {
-//      pos_camera[2] -= speed_camera;
-      glm_translate_z(m4_model, speed_camera);
+      pos_camera[2] -= speed_camera;
     }
     if (key_down[GLFW_KEY_S]) {
-      glm_translate_z(m4_model, -speed_camera);
-//      pos_camera[2] += speed_camera;
+      pos_camera[2] += speed_camera;
     }
-    printf("Pos-camera: %.2f, %2.f, %2.f\n", pos_camera[0], pos_camera[1], pos_camera[2]);
-    for (int i=0; i<4; i++) {
-      for (int j=0; j<4; j++) {
-        printf("%.2f,", m4_model[i][j]);
-      }
-      printf("\n");
-    }
-//    if (angle_current > 2*M_PI) {
-//      angle_current -= 2*M_PI;
-//    } else if ( angle_current < -2*M_PI) {
-//      angle_current += 2*M_PI;
-//    }
-
-//    glm_lookat(pos_camera, pos_lookat, dir_up, m4_view);
     glm_look(pos_camera, dir_camera, dir_up, m4_view);
     glm_mat4_mulN((mat4 *[]){&m4_perspective, &m4_view, &m4_model}, 3, m4_mvp);
-//    glm_mat4_mulN((mat4 *[]){&m4_model, &m4_view, &m4_perspective}, 3, m4_mvp);
 
     render(VAO, glfwGetTime(), program_render, m4_mvp);
 
