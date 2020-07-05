@@ -117,12 +117,8 @@ shaders_compile(void)
 void
 render(GLuint VAO, double time_current, GLuint program, mat4 mvp)
 {
-  GLfloat color[] = {
-    sinf(time_current) * 0.5f + 0.5f,
-    cosf(time_current) * 0.5f + 0.5f,
-    0.0f,
-    1.0f,
-  };
+  UNUSED(time_current);
+  GLfloat color[] = {0.3f, 0.3f, 0.3f, 1.0f};
   glClearBufferfv(GL_COLOR, 0, color);
 
   glUseProgram(program);
@@ -187,33 +183,55 @@ int main(void)
 
   glm_perspective(40.0f, 1.0f, 1.0f, 100.0f, m4_perspective);
 
-  vec3 dir_up = {0.0f, 1.0f, 0.0f};
+  vec3 dir_camera_up = {0.0f, 1.0f, 0.0f};
+//  vec3 dir_camera_right = {1.0f, 0.0f, 0.0f};
   vec3 dir_camera = {0.0f, 0.0f, -1.0f};
 
   vec3 pos_camera = {0.0f, 0.0f, 3.0f};
-//  vec3 pos_lookat = {0.0f, 0.0f, 0.0f};
 
   float speed_camera = 0.08f;
-//  float angle_current = 3*M_PI/4;
+  float pitch_camera = 0.0f;
+  float yaw_camera = -M_PI/2;
+
+  float speed_pitch_camera = 0.01f;
+  float speed_yaw_camera = speed_pitch_camera;
 
   while (!glfwWindowShouldClose(window)) {
 
     glfwPollEvents();
 
-    if (key_down[GLFW_KEY_A]) {
+    if (key_down[GLFW_KEY_F]) {
       pos_camera[0] -= speed_camera;
     }
-    if (key_down[GLFW_KEY_D]) {
+    if (key_down[GLFW_KEY_S]) {
       pos_camera[0] += speed_camera;
     }
 
-    if (key_down[GLFW_KEY_W]) {
+    if (key_down[GLFW_KEY_E]) {
       pos_camera[2] -= speed_camera;
     }
-    if (key_down[GLFW_KEY_S]) {
+    if (key_down[GLFW_KEY_D]) {
       pos_camera[2] += speed_camera;
     }
-    glm_look(pos_camera, dir_camera, dir_up, m4_view);
+
+    if (key_down[GLFW_KEY_J]) {
+      yaw_camera += speed_yaw_camera;
+    }
+    if (key_down[GLFW_KEY_L]) {
+      yaw_camera -= speed_yaw_camera;
+    }
+    if (key_down[GLFW_KEY_I]) {
+      pitch_camera += speed_pitch_camera;
+    }
+    if (key_down[GLFW_KEY_K]) {
+      pitch_camera -= speed_pitch_camera;
+    }
+
+    dir_camera[0] = cosf(yaw_camera) * cosf(pitch_camera);
+    dir_camera[1] = sinf(pitch_camera);
+    dir_camera[2] = sinf(yaw_camera) * cosf(pitch_camera);
+
+    glm_look(pos_camera, dir_camera, dir_camera_up, m4_view);
     glm_mat4_mulN((mat4 *[]){&m4_perspective, &m4_view, &m4_model}, 3, m4_mvp);
 
     render(VAO, glfwGetTime(), program_render, m4_mvp);
