@@ -18,8 +18,15 @@ float OBJ_Y[NUM_OBJECTS] = {0};
 float OBJ_Z[NUM_OBJECTS] = {0};
 
 GLboolean OBJ_FLAG_GRAVITY[NUM_OBJECTS] = {GL_TRUE};
-
 GLboolean key_down[GLFW_KEY_LAST] = {0};
+
+enum CAMERA_MODE {
+  CAMERA_CAMERA,
+  CAMERA_OVERHEAD,
+  CAMERA_LAST
+};
+
+enum CAMERA_MODE CAMERA_MODE_CURRENT = CAMERA_CAMERA;
 
 void
 callback_key(GLFWwindow * window, int key, int scancode, int action, int mods)
@@ -200,6 +207,26 @@ int main(void)
 
     glfwPollEvents();
 
+    if (key_down[GLFW_KEY_SPACE]) {
+      CAMERA_MODE_CURRENT = CAMERA_MODE_CURRENT+1;
+      if (CAMERA_MODE_CURRENT == CAMERA_LAST) {
+        CAMERA_MODE_CURRENT = CAMERA_CAMERA;
+      }
+      key_down[GLFW_KEY_SPACE] = false;
+    }
+
+    switch (CAMERA_MODE_CURRENT) {
+      case CAMERA_CAMERA:
+        printf("CAMER_CAMERA\n");
+        break;
+      case CAMERA_OVERHEAD:
+        printf("CAMER_OVERHEAD\n");
+        break;
+      default:
+        printf("NON-VALID-CAMERA\n");
+        break;
+    }
+
     if (key_down[GLFW_KEY_F]) {
       pos_camera[0] -= speed_camera;
     }
@@ -225,11 +252,6 @@ int main(void)
     }
     if (key_down[GLFW_KEY_K]) {
       pitch_camera -= speed_pitch_camera;
-    }
-
-    if (key_down[GLFW_KEY_SPACE]) {
-      printf("SPAAACE\n");
-      key_down[GLFW_KEY_SPACE] = false;
     }
 
     dir_camera[0] = cosf(yaw_camera) * cosf(pitch_camera);
