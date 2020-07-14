@@ -227,6 +227,11 @@ int main(void)
       pitch_camera -= speed_pitch_camera;
     }
 
+    if (key_down[GLFW_KEY_SPACE]) {
+      printf("SPAAACE\n");
+      key_down[GLFW_KEY_SPACE] = false;
+    }
+
     dir_camera[0] = cosf(yaw_camera) * cosf(pitch_camera);
     dir_camera[1] = sinf(pitch_camera);
     dir_camera[2] = sinf(yaw_camera) * cosf(pitch_camera);
