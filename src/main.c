@@ -39,8 +39,6 @@ callback_key(GLFWwindow * window, int key, int scancode, int action, int mods)
     return;
   }
 
-//  printf("key: %d, mods %d, action: %d scancode:%d\n", key, mods, action, scancode);
-
   if (action == GLFW_PRESS) {
     key_down[key] = GL_TRUE;
   } else {
