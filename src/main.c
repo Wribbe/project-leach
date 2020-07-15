@@ -15,7 +15,6 @@
 #define UNUSED(x) (void)(x)
 typedef uint8_t ID_OBJ;
 
-
 vec3 obj_pos[NUM_OBJECTS] = {0};
 vec3 obj_dir_look[NUM_OBJECTS] = {0};
 vec3 obj_dir_up[NUM_OBJECTS] = {0};
@@ -23,13 +22,13 @@ vec3 obj_dir_up[NUM_OBJECTS] = {0};
 GLboolean OBJ_FLAG_GRAVITY[NUM_OBJECTS] = {GL_TRUE};
 GLboolean key_down[GLFW_KEY_LAST] = {0};
 
-enum CAMERA_MODE {
-  CAMERA_CAMERA,
-  CAMERA_OVERHEAD,
-  CAMERA_LAST
-};
+ID_OBJ ID_LAST = 0;
 
-enum CAMERA_MODE CAMERA_CURRENT = CAMERA_CAMERA;
+ID_OBJ
+id_obj_new(void)
+{
+  return ID_LAST++;
+}
 
 void
 callback_key(GLFWwindow * window, int key, int scancode, int action, int mods)
@@ -241,15 +240,15 @@ int main(void)
 
   glm_perspective(40.0f, 1.0f, 1.0f, 100.0f, m4_perspective);
 
-  ID_OBJ id_camera_camera = 0;
-  ID_OBJ id_camera_overhead = 1;
+  ID_OBJ id_camera_camera = id_obj_new();
+  ID_OBJ id_camera_overhead = id_obj_new();
   ID_OBJ id_camera_current = id_camera_camera;
 
   obj_dir_look_set(id_camera_camera, (vec3){0.0f, 0.0f, -1.0f});
   obj_dir_look_set(id_camera_overhead, (vec3){0.0f, -1.0f, 0.0f});
 
   obj_dir_up_set(id_camera_camera, (vec3){0.0f, 1.0f, 0.0f});
-  obj_dir_up_set(id_camera_overhead, (vec3){0.0f, 1.0f, 0.0f});
+  obj_dir_up_set(id_camera_overhead, (vec3){0.0f, 0.0f, -1.0f});
 
   obj_pos_set(id_camera_camera, (vec3){0.0f, 0.0f, 3.0f});
   obj_pos_set(id_camera_overhead, (vec3){0.0f, 3.0f, 0.0f});
@@ -266,23 +265,19 @@ int main(void)
     glfwPollEvents();
 
     if (key_down[GLFW_KEY_SPACE]) {
-      CAMERA_CURRENT = CAMERA_CURRENT+1;
-      if (CAMERA_CURRENT == CAMERA_LAST) {
-        CAMERA_CURRENT = CAMERA_CAMERA;
+      id_camera_current++;
+      if (id_camera_current == ID_LAST) {
+        id_camera_current = 0;
       }
       key_down[GLFW_KEY_SPACE] = false;
     }
 
-    switch (CAMERA_CURRENT) {
-      case CAMERA_CAMERA:
-        printf("CAMER_CAMERA\n");
-        break;
-      case CAMERA_OVERHEAD:
-        printf("CAMER_OVERHEAD\n");
-        break;
-      default:
-        printf("NON-VALID-CAMERA\n");
-        break;
+    if (id_camera_current == id_camera_camera) {
+      printf("id_camera_camera: %d.\n", id_camera_current);
+    } else if (id_camera_current == id_camera_overhead) {
+      printf("id_camera_overhead: %d.\n", id_camera_current);
+    } else {
+      printf("NON-VALID-CAMERA\n");
     }
 
     if (key_down[GLFW_KEY_F]) {
@@ -312,14 +307,23 @@ int main(void)
       pitch_camera -= speed_pitch_camera;
     }
 
-    obj_dir_look_set(
-      id_camera_current,
-      (vec3){
-        cosf(yaw_camera) * cosf(pitch_camera),
-        sinf(pitch_camera),
-        sinf(yaw_camera) * cosf(pitch_camera)
-      }
-    );
+//    obj_dir_look_set(
+//      id_camera_current,
+//      (vec3){
+//        cosf(yaw_camera) * cosf(pitch_camera),
+//        sinf(pitch_camera),
+//        sinf(yaw_camera) * cosf(pitch_camera)
+//      }
+//    );
+
+//    obj_dir_look_set(
+//      id_camera_current,
+//      (vec3){
+//        cosf(yaw_camera) * cosf(pitch_camera),
+//        sinf(pitch_camera),
+//        sinf(yaw_camera) * cosf(pitch_camera)
+//      }
+//    );
 
     glm_look(
       obj_pos_get(id_camera_current),
