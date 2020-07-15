@@ -6,16 +6,19 @@
 #include <math.h>
 
 #include <signal.h>
+#include <stdint.h>
 #include <cglm/cglm.h>
 
 #define M_PI 3.14159265358979323846
 
 #define NUM_OBJECTS 256
 #define UNUSED(x) (void)(x)
+typedef uint8_t ID_OBJ;
 
-float OBJ_X[NUM_OBJECTS] = {0};
-float OBJ_Y[NUM_OBJECTS] = {0};
-float OBJ_Z[NUM_OBJECTS] = {0};
+
+vec3 obj_pos[NUM_OBJECTS] = {0};
+vec3 obj_dir_look[NUM_OBJECTS] = {0};
+vec3 obj_dir_up[NUM_OBJECTS] = {0};
 
 GLboolean OBJ_FLAG_GRAVITY[NUM_OBJECTS] = {GL_TRUE};
 GLboolean key_down[GLFW_KEY_LAST] = {0};
@@ -26,7 +29,7 @@ enum CAMERA_MODE {
   CAMERA_LAST
 };
 
-enum CAMERA_MODE CAMERA_MODE_CURRENT = CAMERA_CAMERA;
+enum CAMERA_MODE CAMERA_CURRENT = CAMERA_CAMERA;
 
 void
 callback_key(GLFWwindow * window, int key, int scancode, int action, int mods)
@@ -135,6 +138,56 @@ render(GLuint VAO, double time_current, GLuint program, mat4 mvp)
   glDrawArrays(GL_TRIANGLES, 0, 6);
 }
 
+void
+obj_dir_look_set(ID_OBJ id_obj, vec3 v3)
+{
+  obj_dir_look[id_obj][0] = v3[0];
+  obj_dir_look[id_obj][1] = v3[1];
+  obj_dir_look[id_obj][2] = v3[2];
+}
+
+void
+obj_dir_up_set(ID_OBJ id_obj, vec3 v3)
+{
+  obj_dir_up[id_obj][0] = v3[0];
+  obj_dir_up[id_obj][1] = v3[1];
+  obj_dir_up[id_obj][2] = v3[2];
+}
+
+void
+obj_pos_set(ID_OBJ id_obj, vec3 v3)
+{
+  obj_pos[id_obj][0] = v3[0];
+  obj_pos[id_obj][1] = v3[1];
+  obj_pos[id_obj][2] = v3[2];
+}
+
+void
+obj_pos_add(ID_OBJ id_obj, vec3 v3)
+{
+  obj_pos[id_obj][0] += v3[0];
+  obj_pos[id_obj][1] += v3[1];
+  obj_pos[id_obj][2] += v3[2];
+}
+
+
+float *
+obj_pos_get(ID_OBJ id_obj) {
+  return obj_pos[id_obj];
+}
+
+float *
+obj_dir_up_get(ID_OBJ id_obj)
+{
+  return obj_dir_up[id_obj];
+}
+
+float *
+obj_dir_look_get(ID_OBJ id_obj)
+{
+  return obj_dir_look[id_obj];
+}
+
 int main(void)
 {
   GLFWwindow* window;
@@ -188,11 +241,18 @@ int main(void)
 
   glm_perspective(40.0f, 1.0f, 1.0f, 100.0f, m4_perspective);
 
-  vec3 dir_camera_up = {0.0f, 1.0f, 0.0f};
-//  vec3 dir_camera_right = {1.0f, 0.0f, 0.0f};
-  vec3 dir_camera = {0.0f, 0.0f, -1.0f};
+  ID_OBJ id_camera_camera = 0;
+  ID_OBJ id_camera_overhead = 1;
+  ID_OBJ id_camera_current = id_camera_camera;
 
-  vec3 pos_camera = {0.0f, 0.0f, 3.0f};
+  obj_dir_look_set(id_camera_camera, (vec3){0.0f, 0.0f, -1.0f});
+  obj_dir_look_set(id_camera_overhead, (vec3){0.0f, -1.0f, 0.0f});
+
+  obj_dir_up_set(id_camera_camera, (vec3){0.0f, 1.0f, 0.0f});
+  obj_dir_up_set(id_camera_overhead, (vec3){0.0f, 1.0f, 0.0f});
+
+  obj_pos_set(id_camera_camera, (vec3){0.0f, 0.0f, 3.0f});
+  obj_pos_set(id_camera_overhead, (vec3){0.0f, 3.0f, 0.0f});
 
   float speed_camera = 0.08f;
   float pitch_camera = 0.0f;
@@ -206,14 +266,14 @@ int main(void)
     glfwPollEvents();
 
     if (key_down[GLFW_KEY_SPACE]) {
-      CAMERA_MODE_CURRENT = CAMERA_MODE_CURRENT+1;
-      if (CAMERA_MODE_CURRENT == CAMERA_LAST) {
-        CAMERA_MODE_CURRENT = CAMERA_CAMERA;
+      CAMERA_CURRENT = CAMERA_CURRENT+1;
+      if (CAMERA_CURRENT == CAMERA_LAST) {
+        CAMERA_CURRENT = CAMERA_CAMERA;
       }
       key_down[GLFW_KEY_SPACE] = false;
     }
 
-    switch (CAMERA_MODE_CURRENT) {
+    switch (CAMERA_CURRENT) {
       case CAMERA_CAMERA:
         printf("CAMER_CAMERA\n");
         break;
@@ -226,17 +286,17 @@ int main(void)
     }
 
     if (key_down[GLFW_KEY_F]) {
-      pos_camera[0] -= speed_camera;
+      obj_pos_add(id_camera_current, (vec3){-speed_camera, 0.0f, 0.0f});
     }
     if (key_down[GLFW_KEY_S]) {
-      pos_camera[0] += speed_camera;
+      obj_pos_add(id_camera_current, (vec3){speed_camera, 0.0f, 0.0f});
     }
 
     if (key_down[GLFW_KEY_E]) {
-      pos_camera[2] -= speed_camera;
+      obj_pos_add(id_camera_current, (vec3){0.0f, 0.0f, -speed_camera});
     }
     if (key_down[GLFW_KEY_D]) {
-      pos_camera[2] += speed_camera;
+      obj_pos_add(id_camera_current, (vec3){0.0f, 0.0f, speed_camera});
     }
 
     if (key_down[GLFW_KEY_J]) {
@@ -252,11 +312,21 @@ int main(void)
       pitch_camera -= speed_pitch_camera;
     }
 
-    dir_camera[0] = cosf(yaw_camera) * cosf(pitch_camera);
-    dir_camera[1] = sinf(pitch_camera);
-    dir_camera[2] = sinf(yaw_camera) * cosf(pitch_camera);
+    obj_dir_look_set(
+      id_camera_current,
+      (vec3){
+        cosf(yaw_camera) * cosf(pitch_camera),
+        sinf(pitch_camera),
+        sinf(yaw_camera) * cosf(pitch_camera)
+      }
+    );
 
-    glm_look(pos_camera, dir_camera, dir_camera_up, m4_view);
+    glm_look(
+      obj_pos_get(id_camera_current),
+      obj_dir_look_get(id_camera_current),
+      obj_dir_up_get(id_camera_current),
+      m4_view
+    );
     glm_mat4_mulN((mat4 *[]){&m4_perspective, &m4_view, &m4_model}, 3, m4_mvp);
 
     render(VAO, glfwGetTime(), program_render, m4_mvp);
