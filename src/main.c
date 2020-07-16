@@ -23,6 +23,7 @@ GLboolean OBJ_FLAG_GRAVITY[NUM_OBJECTS] = {GL_TRUE};
 GLboolean key_down[GLFW_KEY_LAST] = {0};
 
 ID_OBJ ID_LAST = 0;
+GLboolean DEBUG = false;
 
 ID_OBJ
 id_obj_new(void)
@@ -272,12 +273,10 @@ int main(void)
       key_down[GLFW_KEY_SPACE] = false;
     }
 
-    if (id_camera_current == id_camera_camera) {
-      printf("id_camera_camera: %d.\n", id_camera_current);
-    } else if (id_camera_current == id_camera_overhead) {
-      printf("id_camera_overhead: %d.\n", id_camera_current);
-    } else {
-      printf("NON-VALID-CAMERA\n");
+    if (key_down[GLFW_KEY_Z]) {
+      DEBUG = !DEBUG;
+      printf("DEBUG: %s\n", DEBUG ? "True" : "False");
+      key_down[GLFW_KEY_Z] = false;
     }
 
     if (key_down[GLFW_KEY_F]) {
