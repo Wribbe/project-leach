@@ -198,7 +198,17 @@ int main(void)
   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 5);
 
-  window = glfwCreateWindow(640, 480, "Simple example", NULL, NULL);
+  uint16_t HEIGH_WINDOW = 640;
+  uint16_t WIDTH_WINDOW = 480;
+  float ASPECT_WINDOW = (float)HEIGH_WINDOW/(float)WIDTH_WINDOW;
+
+  window = glfwCreateWindow(
+    HEIGH_WINDOW,
+    WIDTH_WINDOW,
+    "Simple example",
+    NULL, NULL
+  );
+
   if (!window)
   {
     glfwTerminate();
@@ -239,7 +249,7 @@ int main(void)
   mat4 m4_perspective = GLM_MAT4_IDENTITY_INIT;
   mat4 m4_mvp = GLM_MAT4_IDENTITY_INIT;
 
-  glm_perspective(40.0f, 1.0f, 1.0f, 100.0f, m4_perspective);
+  glm_perspective_default(ASPECT_WINDOW, m4_perspective);
 
   ID_OBJ id_camera_camera = id_obj_new();
   ID_OBJ id_camera_overhead = id_obj_new();
