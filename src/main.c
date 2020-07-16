@@ -75,12 +75,12 @@ file_read(const char * path)
 }
 
 GLuint
-shaders_compile(void)
+program(const char * path_src_vert, const char * path_src_frag)
 {
   GLint success = GL_FALSE;
 
-  char * src_shader_vertex = file_read("src/shaders/shader.vert");
-  char * src_shader_fragment = file_read("src/shaders/shader.frag");
+  char * src_shader_vertex = file_read(path_src_vert);
+  char * src_shader_fragment = file_read(path_src_frag);
 
   // Create and compile vertex shader.
   GLuint shader_vertex = glCreateShader(GL_VERTEX_SHADER);
@@ -221,7 +221,10 @@ int main(void)
 
   glfwSetKeyCallback(window, callback_key);
 
-  GLuint program_render = shaders_compile();
+  GLuint program_render = program(
+    "src/shaders/shader.vert",
+    "src/shaders/shader.frag"
+  );
   GLuint VAO = 0;
   glGenVertexArrays(1, &VAO);
   glBindVertexArray(VAO);
