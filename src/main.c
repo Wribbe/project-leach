@@ -170,6 +170,7 @@ render(GLuint VAO, double time_current, GLuint program, mat4 mvp)
 
   GLfloat color[] = {0.3f, 0.3f, 0.3f, 1.0f};
   glClearBufferfv(GL_COLOR, 0, color);
+  glClear(GL_DEPTH_BUFFER_BIT);
 
   glBindVertexArray(VAO);
 
@@ -177,7 +178,9 @@ render(GLuint VAO, double time_current, GLuint program, mat4 mvp)
   uniform_set_vec3(program, "u_color", (vec3){1.0f, 0.0f, 0.0f});
   uniform_set_mat4(program, "mvp", mvp);
 
-  glDrawArrays(GL_TRIANGLES, 0, 6);
+  glDrawArrays(GL_TRIANGLES, 0, 3);
+  uniform_set_vec3(program, "u_color", (vec3){0.0f, 1.0f, 0.0f});
+  glDrawArrays(GL_TRIANGLES, 3, 3);
 }
 
 void
@@ -325,6 +328,9 @@ int main(void)
 
   float speed_pitch_camera = 0.01f;
   float speed_yaw_camera = speed_pitch_camera;
+
+  glEnable(GL_DEPTH_TEST);
+  glDepthFunc(GL_LESS);
 
   while (!glfwWindowShouldClose(window)) {
 
