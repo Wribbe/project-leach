@@ -12,6 +12,9 @@
 #define M_PI 3.14159265358979323846
 
 #define NUM_OBJECTS 256
+#define NUM_PROGRAMS 32
+#define NUM_VAO 32
+
 #define UNUSED(x) (void)(x)
 typedef uint8_t ID_OBJ;
 
@@ -22,24 +25,39 @@ vec3 obj_dir_up[NUM_OBJECTS] = {0};
 GLboolean OBJ_FLAG_GRAVITY[NUM_OBJECTS] = {GL_TRUE};
 GLboolean key_down[GLFW_KEY_LAST] = {0};
 
-ID_OBJ ID_LAST = 0;
+GLboolean DEBUG = false;
+
+GLuint programs[NUM_PROGRAMS] = {0};
+GLuint vao[NUM_VAO] = {0};
+
+ID_OBJ ID_LAST_OBJ = 0;
+GLuint ID_LAST_PROGRAM = 0;
+GLuint ID_LAST_VAO = 0;
 
 ID_OBJ
 id_obj_new(void)
 {
-  return ID_LAST++;
+  return ID_LAST_OBJ++;
 }
-
-GLboolean DEBUG = false;
-
-#define NUM_PROGRAMS 32
-GLuint ID_PROGRAM_LAST = 0;
-GLuint programs[NUM_PROGRAMS] = {0};
 
 GLuint
 id_program_new(void)
 {
-  return ID_PROGRAM_LAST++;
+  return ID_LAST_PROGRAM++;
+}
+
+GLuint
+id_vao_new(void)
+{
+  GLuint id_vao = ID_LAST_VAO++;
+  glGenVertexArrays(1, &vao[id_vao]);
+  return id_vao;
+}
+
+void
+vao_bind(GLuint id_vao)
+{
+  glBindVertexArray(vao[id_vao]);
 }
 
 void
@@ -164,7 +182,7 @@ program_use(GLuint id_program)
 
 
 void
-render(GLuint VAO, double time_current, GLuint program, mat4 mvp)
+render(GLuint id_vao, double time_current, GLuint program, mat4 mvp)
 {
   UNUSED(time_current);
 
@@ -172,7 +190,7 @@ render(GLuint VAO, double time_current, GLuint program, mat4 mvp)
   glClearBufferfv(GL_COLOR, 0, color);
   glClear(GL_DEPTH_BUFFER_BIT);
 
-  glBindVertexArray(VAO);
+  vao_bind(id_vao);
 
   program_use(program);
   uniform_set_vec3(program, "u_color", (vec3){1.0f, 0.0f, 0.0f});
@@ -233,12 +251,10 @@ obj_dir_look_get(ID_OBJ id_obj)
   return obj_dir_look[id_obj];
 }
 
-GLuint id_program_dir = NUM_PROGRAMS+1;
 void
 debug_draw_dir()
 {
-  if (id_program_dir > NUM_PROGRAMS) {
-    id_program_dir = id_program_new();
+  for (ID_OBJ i=0; i<ID_LAST_OBJ; i++) {
   }
 }
 
@@ -280,9 +296,9 @@ int main(void)
     "src/shaders/shader.vert",
     "src/shaders/shader.frag"
   );
-  GLuint VAO = 0;
-  glGenVertexArrays(1, &VAO);
-  glBindVertexArray(VAO);
+
+  GLuint id_vao = id_vao_new();
+  vao_bind(id_vao);
 
   float vertices[] = {
     -0.5f, -0.5f, 0.0f,
@@ -338,7 +354,7 @@ int main(void)
 
     if (key_down[GLFW_KEY_SPACE]) {
       id_camera_current++;
-      if (id_camera_current == ID_LAST) {
+      if (id_camera_current == ID_LAST_OBJ) {
         id_camera_current = 0;
       }
       key_down[GLFW_KEY_SPACE] = false;
@@ -403,13 +419,13 @@ int main(void)
     );
     glm_mat4_mulN((mat4 *[]){&m4_perspective, &m4_view, &m4_model}, 3, m4_mvp);
 
-    render(VAO, glfwGetTime(), id_program_render, m4_mvp);
+    render(id_vao, glfwGetTime(), id_program_render, m4_mvp);
 
-//    if (DEBUG) {
-//      for(ID_OBJ id_obj=0; id_obj<ID_LAST; id_obj++) {
-//        debug_draw_dir(id_obj);
-//      }
-//    }
+    if (DEBUG) {
+      for(ID_OBJ id_obj=0; id_obj<ID_LAST_OBJ; id_obj++) {
+        debug_draw_dir(id_obj);
+      }
+    }
 
     glfwSwapBuffers(window);
   }
