@@ -34,6 +34,8 @@ ID_OBJ ID_LAST_OBJ = 0;
 GLuint ID_LAST_PROGRAM = 0;
 GLuint ID_LAST_VAO = 0;
 
+GLuint id_vao_debug = NUM_VAO+1;
+
 ID_OBJ
 id_obj_new(void)
 {
@@ -58,6 +60,12 @@ void
 vao_bind(GLuint id_vao)
 {
   glBindVertexArray(vao[id_vao]);
+}
+
+void
+vao_unbind(void)
+{
+  glBindVertexArray(0);
 }
 
 void
@@ -193,12 +201,59 @@ render(GLuint id_vao, double time_current, GLuint program, mat4 mvp)
   vao_bind(id_vao);
 
   program_use(program);
-  uniform_set_vec3(program, "u_color", (vec3){1.0f, 0.0f, 0.0f});
   uniform_set_mat4(program, "mvp", mvp);
 
+  uniform_set_vec3(program, "u_color", (vec3){1.0f, 0.0f, 0.0f});
   glDrawArrays(GL_TRIANGLES, 0, 3);
+
   uniform_set_vec3(program, "u_color", (vec3){0.0f, 1.0f, 0.0f});
   glDrawArrays(GL_TRIANGLES, 3, 3);
+
+  if (DEBUG) {
+    if (id_vao_debug > NUM_VAO) {
+
+      GLfloat verts[] = {
+        // Triangle-top.
+        0.0f, 1.0f, 0.0f,
+       -0.3f, 0.7f, 0.0f,
+        0.3f, 0.7f, 0.0f,
+        // Line.
+        0.0f, 0.7f, 0.0f,
+        0.0f, 0.0f, 0.0f,
+      };
+
+      id_vao_debug = id_vao_new();
+      vao_bind(id_vao_debug);
+      GLuint VBO = 0;
+
+      glGenBuffers(1, &VBO);
+      glBindBuffer(GL_ARRAY_BUFFER, VBO);
+      glBufferData(GL_ARRAY_BUFFER, sizeof(verts), verts, GL_STATIC_DRAW);
+
+      glVertexAttribPointer(
+        0,
+        3,
+        GL_FLOAT,
+        GL_FALSE,
+        3*sizeof(float),
+        (void*)0
+      );
+
+      glEnableVertexAttribArray(0);
+      vao_unbind();
+    }
+
+    vao_bind(id_vao_debug);
+
+    uniform_set_vec3(program, "u_color", (vec3){1.0f, 1.0f, 1.0f});
+    glDrawArrays(GL_TRIANGLES, 0, 3);
+    glDrawArrays(GL_LINES, 3, 2);
+
+//    for (ID_OBJ i=0; i<ID_LAST_OBJ; i++) {
+//    }
+
+    vao_unbind();
+  }
 }
 
 void
@@ -233,7 +288,6 @@ obj_pos_add(ID_OBJ id_obj, vec3 v3)
   obj_pos[id_obj][2] += v3[2];
 }
 
-
 float *
 obj_pos_get(ID_OBJ id_obj) {
   return obj_pos[id_obj];
@@ -250,14 +304,6 @@ obj_dir_look_get(ID_OBJ id_obj)
 {
   return obj_dir_look[id_obj];
 }
-
-void
-debug_draw_dir()
-{
-  for (ID_OBJ i=0; i<ID_LAST_OBJ; i++) {
-  }
-}
-
 
 int main(void)
 {
@@ -420,12 +466,6 @@ int main(void)
     glm_mat4_mulN((mat4 *[]){&m4_perspective, &m4_view, &m4_model}, 3, m4_mvp);
 
     render(id_vao, glfwGetTime(), id_program_render, m4_mvp);
-
-    if (DEBUG) {
-      for(ID_OBJ id_obj=0; id_obj<ID_LAST_OBJ; id_obj++) {
-        debug_draw_dir(id_obj);
-      }
-    }
 
     glfwSwapBuffers(window);
   }
