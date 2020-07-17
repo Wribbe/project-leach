@@ -345,10 +345,10 @@ int main(void)
     }
 
     if (key_down[GLFW_KEY_F]) {
-      obj_pos_add(id_camera_current, (vec3){-speed_camera, 0.0f, 0.0f});
+      obj_pos_add(id_camera_current, (vec3){speed_camera, 0.0f, 0.0f});
     }
     if (key_down[GLFW_KEY_S]) {
-      obj_pos_add(id_camera_current, (vec3){speed_camera, 0.0f, 0.0f});
+      obj_pos_add(id_camera_current, (vec3){-speed_camera, 0.0f, 0.0f});
     }
 
     if (key_down[GLFW_KEY_E]) {
