@@ -204,10 +204,7 @@ render(GLuint id_vao, double time_current, GLuint program, mat4 mvp)
   uniform_set_mat4(program, "mvp", mvp);
 
   uniform_set_vec3(program, "u_color", (vec3){1.0f, 0.0f, 0.0f});
-  glDrawArrays(GL_TRIANGLES, 0, 3);
-
-  uniform_set_vec3(program, "u_color", (vec3){0.0f, 1.0f, 0.0f});
-  glDrawArrays(GL_TRIANGLES, 3, 3);
+  glDrawArrays(GL_TRIANGLES, 0, 3*2*6);
 
   if (DEBUG) {
     if (id_vao_debug > NUM_VAO) {
@@ -347,13 +344,47 @@ int main(void)
   vao_bind(id_vao);
 
   float vertices[] = {
-    -0.5f, -0.5f, 0.0f,
-     0.5f, -0.5f, 0.0f,
-     0.0f,  0.5f, 0.0f,
+    -0.5f, -0.5f, -0.5f,
+     0.5f, -0.5f, -0.5f,
+     0.5f,  0.5f, -0.5f,
+     0.5f,  0.5f, -0.5f,
+    -0.5f,  0.5f, -0.5f,
+    -0.5f, -0.5f, -0.5f,
 
-     0.0f, -0.5f,-0.5f,
-     0.0f, -0.5f, 0.5f,
-     0.0f,  0.5f, 0.0f,
+    -0.5f, -0.5f,  0.5f,
+     0.5f, -0.5f,  0.5f,
+     0.5f,  0.5f,  0.5f,
+     0.5f,  0.5f,  0.5f,
+    -0.5f,  0.5f,  0.5f,
+    -0.5f, -0.5f,  0.5f,
+
+    -0.5f,  0.5f,  0.5f,
+    -0.5f,  0.5f, -0.5f,
+    -0.5f, -0.5f, -0.5f,
+    -0.5f, -0.5f, -0.5f,
+    -0.5f, -0.5f,  0.5f,
+    -0.5f,  0.5f,  0.5f,
+
+     0.5f,  0.5f,  0.5f,
+     0.5f,  0.5f, -0.5f,
+     0.5f, -0.5f, -0.5f,
+     0.5f, -0.5f, -0.5f,
+     0.5f, -0.5f,  0.5f,
+     0.5f,  0.5f,  0.5f,
+
+    -0.5f, -0.5f, -0.5f,
+     0.5f, -0.5f, -0.5f,
+     0.5f, -0.5f,  0.5f,
+     0.5f, -0.5f,  0.5f,
+    -0.5f, -0.5f,  0.5f,
+    -0.5f, -0.5f, -0.5f,
+
+    -0.5f,  0.5f, -0.5f,
+     0.5f,  0.5f, -0.5f,
+     0.5f,  0.5f,  0.5f,
+     0.5f,  0.5f,  0.5f,
+    -0.5f,  0.5f,  0.5f,
+    -0.5f,  0.5f, -0.5f
   };
 
   GLuint VBO = 0;
