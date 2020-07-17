@@ -23,12 +23,23 @@ GLboolean OBJ_FLAG_GRAVITY[NUM_OBJECTS] = {GL_TRUE};
 GLboolean key_down[GLFW_KEY_LAST] = {0};
 
 ID_OBJ ID_LAST = 0;
-GLboolean DEBUG = false;
 
 ID_OBJ
 id_obj_new(void)
 {
   return ID_LAST++;
+}
+
+GLboolean DEBUG = false;
+
+#define NUM_PROGRAMS 32
+GLuint ID_PROGRAM_LAST = 0;
+GLuint programs[NUM_PROGRAMS] = {0};
+
+GLuint
+id_program_new(void)
+{
+  return ID_PROGRAM_LAST++;
 }
 
 void
@@ -119,21 +130,52 @@ program(const char * path_src_vert, const char * path_src_frag)
   free(src_shader_vertex);
   free(src_shader_fragment);
 
-  return program;
+  GLuint id_program = id_program_new();
+  programs[id_program] = program;
+
+  return id_program;
 }
+
+void
+uniform_set_vec3(GLuint id_program, const char * name, vec3 v3)
+{
+  glUniform3f(
+    glGetUniformLocation(programs[id_program], name), v3[0], v3[1], v3[2]
+  );
+}
+
+void
+uniform_set_mat4(GLuint id_program, const char * name, mat4 m4)
+{
+  glUniformMatrix4fv(
+    glGetUniformLocation(programs[id_program], name),
+    1,
+    GL_FALSE,
+    m4[0]
+  );
+}
+
+
+void
+program_use(GLuint id_program)
+{
+  glUseProgram(programs[id_program]);
+}
+
 
 void
 render(GLuint VAO, double time_current, GLuint program, mat4 mvp)
 {
   UNUSED(time_current);
+
   GLfloat color[] = {0.3f, 0.3f, 0.3f, 1.0f};
   glClearBufferfv(GL_COLOR, 0, color);
 
-  glUseProgram(program);
   glBindVertexArray(VAO);
 
-  GLuint uloc_mvp = glGetUniformLocation(program, "mvp");
-  glUniformMatrix4fv(uloc_mvp, 1, GL_FALSE, mvp[0]);
+  program_use(program);
+  uniform_set_vec3(program, "u_color", (vec3){1.0f, 0.0f, 0.0f});
+  uniform_set_mat4(program, "mvp", mvp);
 
   glDrawArrays(GL_TRIANGLES, 0, 6);
 }
@@ -188,6 +230,16 @@ obj_dir_look_get(ID_OBJ id_obj)
   return obj_dir_look[id_obj];
 }
 
+GLuint id_program_dir = NUM_PROGRAMS+1;
+void
+debug_draw_dir()
+{
+  if (id_program_dir > NUM_PROGRAMS) {
+    id_program_dir = id_program_new();
+  }
+}
+
+
 int main(void)
 {
   GLFWwindow* window;
@@ -221,7 +273,7 @@ int main(void)
 
   glfwSetKeyCallback(window, callback_key);
 
-  GLuint program_render = program(
+  GLuint id_program_render = program(
     "src/shaders/shader.vert",
     "src/shaders/shader.frag"
   );
@@ -345,7 +397,13 @@ int main(void)
     );
     glm_mat4_mulN((mat4 *[]){&m4_perspective, &m4_view, &m4_model}, 3, m4_mvp);
 
-    render(VAO, glfwGetTime(), program_render, m4_mvp);
+    render(VAO, glfwGetTime(), id_program_render, m4_mvp);
+
+//    if (DEBUG) {
+//      for(ID_OBJ id_obj=0; id_obj<ID_LAST; id_obj++) {
+//        debug_draw_dir(id_obj);
+//      }
+//    }
 
     glfwSwapBuffers(window);
   }
