@@ -319,7 +319,7 @@ int main(void)
   window = glfwCreateWindow(
     HEIGH_WINDOW,
     WIDTH_WINDOW,
-    "Simple example",
+    "Project Leech",
     NULL, NULL
   );
 
