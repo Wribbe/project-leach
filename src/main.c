@@ -3,10 +3,12 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include <math.h>
 
 #include <signal.h>
 #include <stdint.h>
+#include <inttypes.h>
 #include <cglm/cglm.h>
 
 #define M_PI 3.14159265358979323846
@@ -100,13 +102,14 @@ file_read(const char * path)
   size_t size_string = ftell(fh);
   rewind(fh);
 
-  char * data = malloc(size_string);
+  char * data = malloc(size_string+1);
   if (data == NULL) {
     fprintf(stderr, "COULD NOT ALLOCATE DATA\n.");
     return NULL;
   }
 
   fread(data, 1, size_string, fh);
+  data[size_string] = '\0';
   fclose(fh);
   return data;
 }
@@ -204,7 +207,13 @@ render(GLuint id_vao, double time_current, GLuint program, mat4 mvp)
   uniform_set_mat4(program, "mvp", mvp);
 
   uniform_set_vec3(program, "u_color", (vec3){1.0f, 0.0f, 0.0f});
-  glDrawArrays(GL_TRIANGLES, 0, 3*2*6);
+//  glDrawArrays(GL_TRIANGLES, 0, 3*2*6);
+  glDrawElements(
+    GL_TRIANGLES,
+    3*2*6,
+    GL_UNSIGNED_BYTE,
+    (void*)0
+  );
 
   if (DEBUG) {
     if (id_vao_debug > NUM_VAO) {
@@ -302,6 +311,99 @@ obj_dir_look_get(ID_OBJ id_obj)
   return obj_dir_look[id_obj];
 }
 
+GLboolean
+starts_with(const char * s, const char * match)
+{
+  for (size_t i=0; i<strlen(match); i++) {
+    if (*(s+i) != *(match+i)) {
+      return GL_FALSE;
+    }
+  }
+  return GL_TRUE;
+}
+
+struct obj_data {
+  size_t size_vertices;
+  size_t size_indices;
+  float * vertices;
+  uint8_t * indices;
+};
+
+struct obj_data
+obj_load(const char * path_obj)
+{
+  char * data = file_read(path_obj);
+  char * p_data = data;
+
+  if (data == NULL) {
+    fprintf(stderr, "Could not open file %s, aborting.", path_obj);
+    exit(EXIT_FAILURE);
+  }
+
+  #define TO_NEXT_CHAR(c) while (*p_data != c && *p_data != '\n'){p_data++;}
+  #define TO_NEXT_LINE() while (*p_data != '\n'){p_data++;};p_data++;
+
+  struct obj_data obj_data = {0};
+
+  size_t NUM_VERTICES = 128;
+  obj_data.vertices = malloc(sizeof(float)*NUM_VERTICES);
+  if (obj_data.vertices == NULL) {
+    fprintf(stderr, "Could not allocate memory for vertices in obj_load.\n");
+    exit(EXIT_FAILURE);
+  }
+  float * p_vertices = obj_data.vertices;
+
+  size_t NUM_INDICIES = 128;
+  obj_data.indices = malloc(sizeof(uint8_t)*NUM_INDICIES);
+  if (obj_data.indices == NULL) {
+    fprintf(stderr, "Could not allocate memory for indices in obj_load.\n");
+    exit(EXIT_FAILURE);
+  }
+  uint8_t * p_indices = obj_data.indices;
+
+  for (;;) {
+    switch(*p_data) {
+      case('#'):
+      case('o'):
+      case('s'):
+        TO_NEXT_LINE();
+        continue;
+        break;
+    }
+    if (*p_data == '\0') {
+      break;
+    }
+    if (starts_with(p_data, "v ")) {
+      for(;;) {
+        TO_NEXT_CHAR(' ');
+        if (*p_data++ == '\n') {
+          break;
+        }
+        sscanf(p_data, "%f", p_vertices++);
+      }
+    } else if (starts_with(p_data, "f ")) {
+      for(;;) {
+        TO_NEXT_CHAR(' ');
+        if (*p_data++ == '\n') {
+          break;
+        }
+        sscanf(p_data, "%"SCNu8, p_indices);
+        *p_indices -= 1;
+        p_indices++;
+
+      }
+    } else { // Ignore remaining.
+      TO_NEXT_LINE();
+    }
+  }
+
+  free(data);
+
+  obj_data.size_vertices = (p_vertices - obj_data.vertices) * sizeof(float);
+  obj_data.size_indices = (p_indices - obj_data.indices) * sizeof(uint8_t);
+  return obj_data;
+}
+
 int main(void)
 {
   GLFWwindow* window;
@@ -343,54 +445,30 @@ int main(void)
   GLuint id_vao = id_vao_new();
   vao_bind(id_vao);
 
-  float vertices[] = {
-    -0.5f, -0.5f, -0.5f,
-     0.5f, -0.5f, -0.5f,
-     0.5f,  0.5f, -0.5f,
-     0.5f,  0.5f, -0.5f,
-    -0.5f,  0.5f, -0.5f,
-    -0.5f, -0.5f, -0.5f,
-
-    -0.5f, -0.5f,  0.5f,
-     0.5f, -0.5f,  0.5f,
-     0.5f,  0.5f,  0.5f,
-     0.5f,  0.5f,  0.5f,
-    -0.5f,  0.5f,  0.5f,
-    -0.5f, -0.5f,  0.5f,
-
-    -0.5f,  0.5f,  0.5f,
-    -0.5f,  0.5f, -0.5f,
-    -0.5f, -0.5f, -0.5f,
-    -0.5f, -0.5f, -0.5f,
-    -0.5f, -0.5f,  0.5f,
-    -0.5f,  0.5f,  0.5f,
-
-     0.5f,  0.5f,  0.5f,
-     0.5f,  0.5f, -0.5f,
-     0.5f, -0.5f, -0.5f,
-     0.5f, -0.5f, -0.5f,
-     0.5f, -0.5f,  0.5f,
-     0.5f,  0.5f,  0.5f,
-
-    -0.5f, -0.5f, -0.5f,
-     0.5f, -0.5f, -0.5f,
-     0.5f, -0.5f,  0.5f,
-     0.5f, -0.5f,  0.5f,
-    -0.5f, -0.5f,  0.5f,
-    -0.5f, -0.5f, -0.5f,
-
-    -0.5f,  0.5f, -0.5f,
-     0.5f,  0.5f, -0.5f,
-     0.5f,  0.5f,  0.5f,
-     0.5f,  0.5f,  0.5f,
-    -0.5f,  0.5f,  0.5f,
-    -0.5f,  0.5f, -0.5f
-  };
+  struct obj_data obj_cube = obj_load("res/cube.obj");
 
   GLuint VBO = 0;
   glGenBuffers(1, &VBO);
   glBindBuffer(GL_ARRAY_BUFFER, VBO);
-  glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+  glBufferData(
+    GL_ARRAY_BUFFER,
+    obj_cube.size_vertices,
+    obj_cube.vertices,
+    GL_STATIC_DRAW
+  );
+
+  GLuint EBO = 0;
+  glGenBuffers(1, &EBO);
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+  glBufferData(
+    GL_ELEMENT_ARRAY_BUFFER,
+    obj_cube.size_indices,
+    obj_cube.indices,
+    GL_STATIC_DRAW
+  );
+
+  free(obj_cube.vertices);
+  free(obj_cube.indices);
 
   glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3*sizeof(float), (void*)0);
   glEnableVertexAttribArray(0);
