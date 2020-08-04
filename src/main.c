@@ -30,7 +30,7 @@ GLboolean key_down[GLFW_KEY_LAST] = {0};
 GLboolean DEBUG = false;
 
 GLuint programs[NUM_PROGRAMS] = {0};
-GLuint vao[NUM_VAO] = {0};
+GLuint vaos[NUM_VAO] = {0};
 
 ID_OBJ ID_LAST_OBJ = 0;
 GLuint ID_LAST_PROGRAM = 0;
@@ -50,6 +50,11 @@ id_program_new(void)
   return ID_LAST_PROGRAM++;
 }
 
+struct VAO {
+  GLuint id;
+  size_t num_to_render;
+};
+
 GLuint
 id_vao_new(void)
 {
@@ -59,9 +64,9 @@ id_vao_new(void)
 }
 
 void
-vao_bind(GLuint id_vao)
+vao_bind(struct VAO VAO)
 {
-  glBindVertexArray(vao[id_vao]);
+  glBindVertexArray(vaos[VAO.id]);
 }
 
 void
@@ -193,7 +198,7 @@ program_use(GLuint id_program)
 
 
 void
-render(GLuint id_vao, double time_current, GLuint program, mat4 mvp)
+render(struct VAO VAO, double time_current, GLuint program, mat4 mvp)
 {
   UNUSED(time_current);
 
@@ -201,7 +206,7 @@ render(GLuint id_vao, double time_current, GLuint program, mat4 mvp)
   glClearBufferfv(GL_COLOR, 0, color);
   glClear(GL_DEPTH_BUFFER_BIT);
 
-  vao_bind(id_vao);
+  vao_bind(VAO);
 
   program_use(program);
   uniform_set_mat4(program, "mvp", mvp);
@@ -353,8 +358,8 @@ obj_load(const char * path_obj)
   }
   float * p_vertices = obj_data.vertices;
 
-  size_t NUM_INDICIES = 128;
-  obj_data.indices = malloc(sizeof(uint8_t)*NUM_INDICIES);
+  size_t NUM_INDICES = 128;
+  obj_data.indices = malloc(sizeof(uint8_t)*NUM_INDICES);
   if (obj_data.indices == NULL) {
     fprintf(stderr, "Could not allocate memory for indices in obj_load.\n");
     exit(EXIT_FAILURE);
@@ -380,6 +385,15 @@ obj_load(const char * path_obj)
           break;
         }
         sscanf(p_data, "%f", p_vertices++);
+        if ((size_t)(p_vertices - obj_data.vertices) == NUM_VERTICES) {
+          size_t offset_current = NUM_VERTICES;
+          NUM_VERTICES *= 2;
+          obj_data.vertices = realloc(
+            obj_data.vertices,
+            sizeof(float)*NUM_VERTICES
+          );
+          p_vertices = obj_data.vertices+offset_current;
+        }
       }
     } else if (starts_with(p_data, "f ")) {
       for(;;) {
@@ -390,7 +404,15 @@ obj_load(const char * path_obj)
         sscanf(p_data, "%"SCNu8, p_indices);
         *p_indices -= 1;
         p_indices++;
-
+        if ((size_t)(p_indices - obj_data.indices) == NUM_INDICES) {
+          size_t offset_current = NUM_INDICES;
+          NUM_INDICES *= 2;
+          obj_data.indices = realloc(
+            obj_data.indices,
+            sizeof(float)*NUM_INDICES
+          );
+          p_indices = obj_data.indices+offset_current;
+        }
       }
     } else { // Ignore remaining.
       TO_NEXT_LINE();
@@ -401,6 +423,7 @@ obj_load(const char * path_obj)
 
   obj_data.size_vertices = (p_vertices - obj_data.vertices) * sizeof(float);
   obj_data.size_indices = (p_indices - obj_data.indices) * sizeof(uint8_t);
+
   return obj_data;
 }
 
@@ -442,18 +465,19 @@ int main(void)
     "src/shaders/shader.frag"
   );
 
-  GLuint id_vao = id_vao_new();
-  vao_bind(id_vao);
+  struct VAO vao = id_vao_new();
+  vao_bind(vao);
 
-  struct obj_data obj_cube = obj_load("res/cube.obj");
+//  struct obj_data obj_obj = obj_load("res/cube.obj");
+  struct obj_data obj_obj = obj_load("res/monkey.obj");
 
   GLuint VBO = 0;
   glGenBuffers(1, &VBO);
   glBindBuffer(GL_ARRAY_BUFFER, VBO);
   glBufferData(
     GL_ARRAY_BUFFER,
-    obj_cube.size_vertices,
-    obj_cube.vertices,
+    obj_obj.size_vertices,
+    obj_obj.vertices,
     GL_STATIC_DRAW
   );
 
@@ -462,13 +486,13 @@ int main(void)
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
   glBufferData(
     GL_ELEMENT_ARRAY_BUFFER,
-    obj_cube.size_indices,
-    obj_cube.indices,
+    obj_obj.size_indices,
+    obj_obj.indices,
     GL_STATIC_DRAW
   );
 
-  free(obj_cube.vertices);
-  free(obj_cube.indices);
+  free(obj_obj.vertices);
+  free(obj_obj.indices);
 
   glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3*sizeof(float), (void*)0);
   glEnableVertexAttribArray(0);
