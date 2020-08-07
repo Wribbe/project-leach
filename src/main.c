@@ -19,6 +19,7 @@
 
 #define UNUSED(x) (void)(x)
 typedef uint8_t ID_OBJ;
+typedef GLuint TYPE_INDICES;
 
 vec3 obj_pos[NUM_OBJECTS] = {0};
 vec3 obj_dir_look[NUM_OBJECTS] = {0};
@@ -50,23 +51,37 @@ id_program_new(void)
   return ID_LAST_PROGRAM++;
 }
 
-struct VAO {
-  GLuint id;
-  size_t num_to_render;
-};
-
 GLuint
 id_vao_new(void)
 {
   GLuint id_vao = ID_LAST_VAO++;
-  glGenVertexArrays(1, &vao[id_vao]);
+  glGenVertexArrays(1, &vaos[id_vao]);
   return id_vao;
 }
 
-void
-vao_bind(struct VAO VAO)
+struct VAO {
+  GLuint id;
+  size_t num_indices;
+};
+
+struct VAO
+vao_new(void)
 {
-  glBindVertexArray(vaos[VAO.id]);
+  return (struct VAO){
+    .id = id_vao_new()
+  };
+}
+
+void
+vao_bind_id(GLuint id_vao)
+{
+  glBindVertexArray(vaos[id_vao]);
+}
+
+void
+vao_bind(struct VAO * vao)
+{
+  vao_bind_id(vao->id);
 }
 
 void
@@ -198,7 +213,7 @@ program_use(GLuint id_program)
 
 
 void
-render(struct VAO VAO, double time_current, GLuint program, mat4 mvp)
+render(struct VAO * VAO, double time_current, GLuint program, mat4 mvp)
 {
   UNUSED(time_current);
 
@@ -211,14 +226,27 @@ render(struct VAO VAO, double time_current, GLuint program, mat4 mvp)
   program_use(program);
   uniform_set_mat4(program, "mvp", mvp);
 
-  uniform_set_vec3(program, "u_color", (vec3){1.0f, 0.0f, 0.0f});
-//  glDrawArrays(GL_TRIANGLES, 0, 3*2*6);
-  glDrawElements(
-    GL_TRIANGLES,
-    3*2*6,
-    GL_UNSIGNED_BYTE,
-    (void*)0
-  );
+//  glDrawElements(
+//    GL_TRIANGLES,
+//    VAO->num_indices,
+//    GL_UNSIGNED_INT,
+//    (void*)(0)
+//  );
+
+  for (size_t i=0; i<VAO->num_indices; i += 3) {
+    uniform_set_vec3(program, "u_color", (vec3){
+      (float)rand()/RAND_MAX,
+      (float)rand()/RAND_MAX,
+      (float)rand()/RAND_MAX
+    });
+    glDrawElements(
+      GL_TRIANGLES,
+      3,
+      GL_UNSIGNED_INT,
+      (void*)(i*sizeof(TYPE_INDICES))
+    );
+//    printf("%zu\n", i);
+  }
 
   if (DEBUG) {
     if (id_vao_debug > NUM_VAO) {
@@ -234,7 +262,7 @@ render(struct VAO VAO, double time_current, GLuint program, mat4 mvp)
       };
 
       id_vao_debug = id_vao_new();
-      vao_bind(id_vao_debug);
+      vao_bind_id(id_vao_debug);
       GLuint VBO = 0;
 
       glGenBuffers(1, &VBO);
@@ -254,7 +282,7 @@ render(struct VAO VAO, double time_current, GLuint program, mat4 mvp)
       vao_unbind();
     }
 
-    vao_bind(id_vao_debug);
+    vao_bind_id(id_vao_debug);
 
     uniform_set_vec3(program, "u_color", (vec3){1.0f, 1.0f, 1.0f});
     glDrawArrays(GL_TRIANGLES, 0, 3);
@@ -330,8 +358,10 @@ starts_with(const char * s, const char * match)
 struct obj_data {
   size_t size_vertices;
   size_t size_indices;
+  size_t num_indices;
+  size_t num_vertices;
   float * vertices;
-  uint8_t * indices;
+  TYPE_INDICES * indices;
 };
 
 struct obj_data
@@ -359,12 +389,12 @@ obj_load(const char * path_obj)
   float * p_vertices = obj_data.vertices;
 
   size_t NUM_INDICES = 128;
-  obj_data.indices = malloc(sizeof(uint8_t)*NUM_INDICES);
+  obj_data.indices = malloc(sizeof(TYPE_INDICES)*NUM_INDICES);
   if (obj_data.indices == NULL) {
     fprintf(stderr, "Could not allocate memory for indices in obj_load.\n");
     exit(EXIT_FAILURE);
   }
-  uint8_t * p_indices = obj_data.indices;
+  TYPE_INDICES * p_indices = obj_data.indices;
 
   for (;;) {
     switch(*p_data) {
@@ -388,6 +418,7 @@ obj_load(const char * path_obj)
         if ((size_t)(p_vertices - obj_data.vertices) == NUM_VERTICES) {
           size_t offset_current = NUM_VERTICES;
           NUM_VERTICES *= 2;
+          printf("New num_vertice size: %zu\n", NUM_VERTICES);
           obj_data.vertices = realloc(
             obj_data.vertices,
             sizeof(float)*NUM_VERTICES
@@ -401,12 +432,13 @@ obj_load(const char * path_obj)
         if (*p_data++ == '\n') {
           break;
         }
-        sscanf(p_data, "%"SCNu8, p_indices);
+        sscanf(p_data, "%u", p_indices);
         *p_indices -= 1;
         p_indices++;
         if ((size_t)(p_indices - obj_data.indices) == NUM_INDICES) {
           size_t offset_current = NUM_INDICES;
           NUM_INDICES *= 2;
+          printf("New num_indices size: %zu\n", NUM_INDICES);
           obj_data.indices = realloc(
             obj_data.indices,
             sizeof(float)*NUM_INDICES
@@ -419,10 +451,26 @@ obj_load(const char * path_obj)
     }
   }
 
+  for (TYPE_INDICES * pi = obj_data.indices; pi<p_indices; pi++) {
+    printf("%d ", *pi);
+  }
+  printf("\n");
+
   free(data);
 
-  obj_data.size_vertices = (p_vertices - obj_data.vertices) * sizeof(float);
-  obj_data.size_indices = (p_indices - obj_data.indices) * sizeof(uint8_t);
+  obj_data.num_vertices = p_vertices - obj_data.vertices;
+  obj_data.size_vertices = obj_data.num_vertices * sizeof(float);
+  obj_data.num_indices = p_indices - obj_data.indices;
+  obj_data.size_indices =  obj_data.num_indices * sizeof(TYPE_INDICES);
+
+  printf(
+    "size_vertices: %zu size_indices: %zu num_vertices: %zu num_indices: %zu float: %zu\n",
+    obj_data.size_vertices,
+    obj_data.size_indices,
+    obj_data.num_vertices,
+    obj_data.num_indices,
+    sizeof(float)
+  );
 
   return obj_data;
 }
@@ -465,11 +513,13 @@ int main(void)
     "src/shaders/shader.frag"
   );
 
-  struct VAO vao = id_vao_new();
-  vao_bind(vao);
+  struct VAO vao = vao_new();
+  vao_bind(&vao);
 
 //  struct obj_data obj_obj = obj_load("res/cube.obj");
   struct obj_data obj_obj = obj_load("res/monkey.obj");
+//  struct obj_data obj_obj = obj_load("res/septacube.obj");
+  vao.num_indices = obj_obj.num_indices;
 
   GLuint VBO = 0;
   glGenBuffers(1, &VBO);
@@ -598,7 +648,7 @@ int main(void)
     );
     glm_mat4_mulN((mat4 *[]){&m4_perspective, &m4_view, &m4_model}, 3, m4_mvp);
 
-    render(id_vao, glfwGetTime(), id_program_render, m4_mvp);
+    render(&vao, glfwGetTime(), id_program_render, m4_mvp);
 
     glfwSwapBuffers(window);
   }
