@@ -338,11 +338,13 @@ obj_dir_up_get(ID_OBJ id_obj)
   return obj_dir_up[id_obj];
 }
 
+
 float *
 obj_dir_look_get(ID_OBJ id_obj)
 {
   return obj_dir_look[id_obj];
 }
+
 
 GLboolean
 starts_with(const char * s, const char * match)
@@ -363,6 +365,29 @@ struct obj_data {
   float * vertices;
   TYPE_INDICES * indices;
 };
+
+void
+obj_pos_forward(ID_OBJ id_obj, float speed)
+{
+  vec3 v3_result = {0};
+  glm_vec3_scale(obj_dir_look_get(id_obj), speed, v3_result);
+  obj_pos_add(id_obj, v3_result);
+}
+
+void
+obj_pos_strafe(ID_OBJ id_obj, float speed)
+{
+  vec3 right = {0};
+  vec3 result = {0};
+
+  float * look = obj_dir_look_get(id_obj);
+  float * up = obj_dir_up_get(id_obj);
+
+  glm_vec3_cross(look, up, right);
+  glm_vec3_scale(right, speed, result);
+
+  obj_pos_add(id_obj, result);
+}
 
 struct obj_data
 obj_load(const char * path_obj)
@@ -571,7 +596,7 @@ int main(void)
   float pitch_camera = 0.0f;
   float yaw_camera = -M_PI/2;
 
-  float speed_pitch_camera = 0.01f;
+  float speed_pitch_camera = speed_camera/2;
   float speed_yaw_camera = speed_pitch_camera;
 
   glEnable(GL_DEPTH_TEST);
@@ -596,49 +621,40 @@ int main(void)
     }
 
     if (key_down[GLFW_KEY_F]) {
-      obj_pos_add(id_camera_current, (vec3){speed_camera, 0.0f, 0.0f});
+      obj_pos_strafe(id_camera_current, speed_camera);
     }
     if (key_down[GLFW_KEY_S]) {
-      obj_pos_add(id_camera_current, (vec3){-speed_camera, 0.0f, 0.0f});
+      obj_pos_strafe(id_camera_current, -speed_camera);
     }
 
     if (key_down[GLFW_KEY_E]) {
-      obj_pos_add(id_camera_current, (vec3){0.0f, 0.0f, -speed_camera});
+      obj_pos_forward(id_camera_current, speed_camera);
     }
     if (key_down[GLFW_KEY_D]) {
-      obj_pos_add(id_camera_current, (vec3){0.0f, 0.0f, speed_camera});
+      obj_pos_forward(id_camera_current, -speed_camera);
     }
 
     if (key_down[GLFW_KEY_J]) {
-      yaw_camera += speed_yaw_camera;
+      yaw_camera += -speed_yaw_camera;
     }
     if (key_down[GLFW_KEY_L]) {
-      yaw_camera -= speed_yaw_camera;
+      yaw_camera += speed_yaw_camera;
     }
     if (key_down[GLFW_KEY_I]) {
       pitch_camera += speed_pitch_camera;
     }
     if (key_down[GLFW_KEY_K]) {
-      pitch_camera -= speed_pitch_camera;
+      pitch_camera += -speed_pitch_camera;
     }
 
-//    obj_dir_look_set(
-//      id_camera_current,
-//      (vec3){
-//        cosf(yaw_camera) * cosf(pitch_camera),
-//        sinf(pitch_camera),
-//        sinf(yaw_camera) * cosf(pitch_camera)
-//      }
-//    );
-
-//    obj_dir_look_set(
-//      id_camera_current,
-//      (vec3){
-//        cosf(yaw_camera) * cosf(pitch_camera),
-//        sinf(pitch_camera),
-//        sinf(yaw_camera) * cosf(pitch_camera)
-//      }
-//    );
+    obj_dir_look_set(
+      id_camera_current,
+      (vec3){
+        cosf(yaw_camera) * cosf(pitch_camera),
+        sinf(pitch_camera),
+        sinf(yaw_camera) * cosf(pitch_camera)
+      }
+    );
 
     glm_look(
       obj_pos_get(id_camera_current),
