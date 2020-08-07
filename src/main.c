@@ -367,11 +367,20 @@ struct obj_data {
 };
 
 void
-obj_pos_forward(ID_OBJ id_obj, float speed)
+obj_pos_forward(ID_OBJ id_obj, float speed, vec3 dir)
 {
-  vec3 v3_result = {0};
-  glm_vec3_scale(obj_dir_look_get(id_obj), speed, v3_result);
-  obj_pos_add(id_obj, v3_result);
+  vec3 look = {0};
+
+  if (dir == NULL) {
+    glm_vec3_copy(obj_dir_look_get(id_obj), look);
+  } else {
+    glm_vec3_copy(dir, look);
+  }
+
+  vec3 result = {0};
+
+  glm_vec3_scale(look, speed, result);
+  obj_pos_add(id_obj, result);
 }
 
 void
@@ -382,10 +391,9 @@ obj_pos_strafe(ID_OBJ id_obj, float speed)
 
   float * look = obj_dir_look_get(id_obj);
   float * up = obj_dir_up_get(id_obj);
-
   glm_vec3_cross(look, up, right);
+  glm_vec3_normalize(right);
   glm_vec3_scale(right, speed, result);
-
   obj_pos_add(id_obj, result);
 }
 
@@ -620,6 +628,7 @@ int main(void)
       key_down[GLFW_KEY_Z] = false;
     }
 
+
     if (key_down[GLFW_KEY_F]) {
       obj_pos_strafe(id_camera_current, speed_camera);
     }
@@ -628,10 +637,26 @@ int main(void)
     }
 
     if (key_down[GLFW_KEY_E]) {
-      obj_pos_forward(id_camera_current, speed_camera);
+      if (key_down[GLFW_KEY_LEFT_SHIFT]) {
+        vec3 dir = {0};
+        glm_vec3_copy(obj_dir_look_get(id_camera_current), dir);
+        dir[1] = 0.0f;
+        glm_vec3_normalize(dir);
+        obj_pos_forward(id_camera_current, speed_camera, dir);
+      } else {
+        obj_pos_forward(id_camera_current, speed_camera, NULL);
+      }
     }
     if (key_down[GLFW_KEY_D]) {
-      obj_pos_forward(id_camera_current, -speed_camera);
+      if (key_down[GLFW_KEY_LEFT_SHIFT]) {
+        vec3 dir = {0};
+        glm_vec3_copy(obj_dir_look_get(id_camera_current), dir);
+        dir[1] = 0.0f;
+        glm_vec3_normalize(dir);
+        obj_pos_forward(id_camera_current, -speed_camera, dir);
+      } else {
+        obj_pos_forward(id_camera_current, -speed_camera, NULL);
+      }
     }
 
     if (key_down[GLFW_KEY_J]) {
@@ -641,10 +666,32 @@ int main(void)
       yaw_camera += speed_yaw_camera;
     }
     if (key_down[GLFW_KEY_I]) {
-      pitch_camera += speed_pitch_camera;
+      if (key_down[GLFW_KEY_LEFT_SHIFT]) {
+        obj_pos_forward(
+          id_camera_current,
+          speed_camera,
+          (vec3){0.0f, 1.0f, 0.0f}
+        );
+      } else {
+        float pitch_camera_new = pitch_camera + speed_pitch_camera;
+        if (pitch_camera_new < M_PI/2-0.1f) {
+          pitch_camera = pitch_camera_new;
+        }
+      }
     }
     if (key_down[GLFW_KEY_K]) {
-      pitch_camera += -speed_pitch_camera;
+      if (key_down[GLFW_KEY_LEFT_SHIFT]) {
+        obj_pos_forward(
+          id_camera_current,
+          -speed_camera,
+          (vec3){0.0f, 1.0f, 0.0f}
+        );
+      } else {
+        float pitch_camera_new = pitch_camera - speed_pitch_camera;
+        if (pitch_camera_new > -M_PI/2+0.1f) {
+          pitch_camera = pitch_camera_new;
+        }
+      }
     }
 
     obj_dir_look_set(
