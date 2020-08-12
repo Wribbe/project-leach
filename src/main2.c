@@ -1,11 +1,11 @@
-#include <stdlib.h>
-#include <stdio.h>
+#include "lib/utils.h"
 
-#include <cglm/cglm.h>
-#include <glad/glad.h>
-#include <GLFW/glfw3.h>
+GLuint vaos[NUM_OBJECTS] = {0};
+GLuint programs[NUM_OBJECTS] = {0};
+GLuint mat4_models[NUM_OBJECTS] = {0};
 
-#define UNUSED(x) (void)x
+GLuint id_object_last = 0;
+GLuint id_camera_current = 0;
 
 GLFWwindow *
 window_get(float * WINDOW_ASPECT)
@@ -46,14 +46,23 @@ process_events()
 }
 
 void
-render_objects()
-{
-}
-
-void
-setup_objects(float window_aspect)
+render_objects(float window_aspect)
 {
   UNUSED(window_aspect);
+}
+
+GLuint
+setup_objects()
+{
+  // Create basic program.
+  GLuint id_program = program_create(
+    "src/shaders/shader.vert",
+    "src/shaders/shader.frag"
+  );
+
+  // Setup camera object.
+  GLuint id_camera = obj_create(id_program);
+  return id_camera;
 }
 
 int
@@ -61,11 +70,12 @@ main(void)
 {
   float window_aspect = 0;
   GLFWwindow * window = window_get(&window_aspect);
-  setup_objects(window_aspect);
+  GLuint id_camera = setup_objects();
+  UNUSED(id_camera);
   while (!glfwWindowShouldClose(window)) {
     glfwPollEvents();
     process_events();
-    render_objects();
+    render_objects(window_aspect);
     glfwSwapBuffers(window);
   }
 }

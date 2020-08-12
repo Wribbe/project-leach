@@ -2,9 +2,11 @@
 DEPS := \
 	glfw/src/libglfw3.a \
 	obj/glad.o \
-	cglm
+	cglm \
 
-INCLUDES := -Iglad/GL/include -Iglfw/include -Icglm/include
+DEPS2 := lib/utils.c
+
+INCLUDES := -Iglad/GL/include -Iglfw/include -Icglm/include -I.
 
 #FLAGS_GLFW := $(shell pkg-config --static --libs glfw/src/glfw3.pc)
 FLAGS_GLFW := -L/usr/local/lib -lrt -lm -ldl -lX11 -lpthread -lxcb -lXau -lXdmcp
@@ -14,6 +16,8 @@ SRCS := $(wildcard src/*.c)
 BINS := $(foreach s,${SRCS},$(patsubst src/%.c,bin/%,$s))
 
 all: ${DEPS} ${BINS}
+
+bin/main2: ${DEPS2}
 
 glad/GL/src/glad.c :
 	git clone https://github.com/Dav1dde/glad
