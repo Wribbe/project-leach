@@ -72,6 +72,15 @@ vao_new(void)
   };
 }
 
+struct obj {
+  struct VAO vao;
+  mat4 model;
+  mat4 mpv;
+  GLuint program;
+};
+
+struct obj * obj_last = NULL;
+
 void
 vao_bind_id(GLuint id_vao)
 {
@@ -213,18 +222,17 @@ program_use(GLuint id_program)
 
 
 void
-render(struct VAO * VAO, double time_current, GLuint program, mat4 mvp)
+render(struct obj * obj)
+//render(struct VAO * VAO, double time_current, GLuint program, mat4 mvp)
 {
-  UNUSED(time_current);
-
   GLfloat color[] = {0.3f, 0.3f, 0.3f, 1.0f};
   glClearBufferfv(GL_COLOR, 0, color);
   glClear(GL_DEPTH_BUFFER_BIT);
 
-  vao_bind(VAO);
+  vao_bind(&obj->vao);
 
-  program_use(program);
-  uniform_set_mat4(program, "mvp", mvp);
+  program_use(obj->program);
+  uniform_set_mat4(obj->program, "mvp", obj->mpv);
 
 //  glDrawElements(
 //    GL_TRIANGLES,
@@ -233,8 +241,8 @@ render(struct VAO * VAO, double time_current, GLuint program, mat4 mvp)
 //    (void*)(0)
 //  );
 
-  for (size_t i=0; i<VAO->num_indices; i += 3) {
-    uniform_set_vec3(program, "u_color", (vec3){
+  for (size_t i=0; i<obj->vao.num_indices; i += 3) {
+    uniform_set_vec3(obj->program, "u_color", (vec3){
       (float)rand()/RAND_MAX,
       (float)rand()/RAND_MAX,
       (float)rand()/RAND_MAX
@@ -284,7 +292,7 @@ render(struct VAO * VAO, double time_current, GLuint program, mat4 mvp)
 
     vao_bind_id(id_vao_debug);
 
-    uniform_set_vec3(program, "u_color", (vec3){1.0f, 1.0f, 1.0f});
+    uniform_set_vec3(obj->program, "u_color", (vec3){1.0f, 1.0f, 1.0f});
     glDrawArrays(GL_TRIANGLES, 0, 3);
     glDrawArrays(GL_LINES, 3, 2);
 
@@ -541,10 +549,10 @@ int main(void)
 
   glfwSetKeyCallback(window, callback_key);
 
-  GLuint id_program_render = program(
-    "src/shaders/shader.vert",
-    "src/shaders/shader.frag"
-  );
+//  GLuint id_program_render = program(
+//    "src/shaders/shader.vert",
+//    "src/shaders/shader.frag"
+//  );
 
   struct VAO vao = vao_new();
   vao_bind(&vao);
@@ -609,6 +617,9 @@ int main(void)
 
   glEnable(GL_DEPTH_TEST);
   glDepthFunc(GL_LESS);
+
+
+//  struct obj obj = {0};
 
   while (!glfwWindowShouldClose(window)) {
 
@@ -711,7 +722,10 @@ int main(void)
     );
     glm_mat4_mulN((mat4 *[]){&m4_perspective, &m4_view, &m4_model}, 3, m4_mvp);
 
-    render(&vao, glfwGetTime(), id_program_render, m4_mvp);
+//    render(&vao, glfwGetTime(), id_program_render, m4_mvp);
+    for (struct obj * obj; obj<obj_last; obj++) {
+      render(obj);
+    }
 
     glfwSwapBuffers(window);
   }
