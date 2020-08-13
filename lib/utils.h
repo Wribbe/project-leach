@@ -21,5 +21,8 @@ file_read(const char * filepath);
 GLuint
 program_create(const char * path_vert, const char * path_frag);
 
+void
+program_use(GLuint id_program);
+
 GLuint
 obj_create(GLuint id_program);

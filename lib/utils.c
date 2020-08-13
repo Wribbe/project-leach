@@ -1,5 +1,14 @@
 #include "lib/utils.h"
 
+GLuint vaos[NUM_OBJECTS] = {0};
+GLuint programs[NUM_OBJECTS] = {0};
+GLuint mat4_models[NUM_OBJECTS] = {0};
+
+GLuint id_vao_last= 0;
+GLuint id_program_last = 0;
+GLuint id_camera_current = 0;
+
+
 char *
 file_read(const char * filepath)
 {
@@ -63,13 +72,33 @@ program_create(const char * path_vertex, const char * path_fragment)
     exit(EXIT_FAILURE);
   }
 
-  printf("vertex: %s\n", data_vertex);
-  printf("fragment: %s\n", data_fragment);
-
   free((void *)data_vertex);
   free((void *)data_fragment);
 
-  return 0;
+  GLuint id_program = glCreateProgram();
+
+  glAttachShader(id_program, shader_vertex);
+  glAttachShader(id_program, shader_fragment);
+
+  glLinkProgram(id_program);
+  glGetProgramiv(id_program, GL_LINK_STATUS, &success);
+
+  if (!success) {
+    fprintf(stderr, "Failed to link program.\n");
+    exit(EXIT_FAILURE);
+  }
+
+  glDeleteShader(shader_vertex);
+  glDeleteShader(shader_fragment);
+
+  programs[id_program_last] = id_program;
+
+  return id_program_last++;
+}
+
+void
+program_use(GLuint id_program) {
+  glUseProgram(programs[id_program]);
 }
 
 GLuint

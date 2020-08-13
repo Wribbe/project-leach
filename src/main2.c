@@ -1,12 +1,5 @@
 #include "lib/utils.h"
 
-GLuint vaos[NUM_OBJECTS] = {0};
-GLuint programs[NUM_OBJECTS] = {0};
-GLuint mat4_models[NUM_OBJECTS] = {0};
-
-GLuint id_object_last = 0;
-GLuint id_camera_current = 0;
-
 GLFWwindow *
 window_get(float * WINDOW_ASPECT)
 {
