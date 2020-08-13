@@ -32,16 +32,42 @@ file_read(const char * filepath)
 
 
 GLuint
-program_create(const char * path_vert, const char * path_frag)
+program_create(const char * path_vertex, const char * path_fragment)
 {
-  char * data_vert = file_read(path_vert);
-  char * data_frag = file_read(path_frag);
+  const char * data_vertex = file_read(path_vertex);
+  const char * data_fragment = file_read(path_fragment);
 
-  printf("vert: %s\n", data_vert);
-  printf("frag: %s\n", data_frag);
+  GLuint shader_vertex = glCreateShader(GL_VERTEX_SHADER);
+  GLuint shader_fragment = glCreateShader(GL_FRAGMENT_SHADER);
 
-  free(data_vert);
-  free(data_frag);
+  glShaderSource(shader_vertex, 1, &data_vertex, NULL);
+  glShaderSource(shader_fragment, 1, &data_fragment, NULL);
+
+  int success = 0;
+  size_t size_info = 512;
+  char info[size_info];
+
+  glCompileShader(shader_vertex);
+  glGetShaderiv(shader_vertex, GL_COMPILE_STATUS, &success);
+  if (!success) {
+    glGetShaderInfoLog(shader_vertex, size_info, NULL, info);
+    fprintf(stderr, "Failed to compile vertex shader: %s\n", info);
+    exit(EXIT_FAILURE);
+  }
+
+  glCompileShader(shader_fragment);
+  glGetShaderiv(shader_fragment, GL_COMPILE_STATUS, &success);
+  if (!success) {
+    glGetShaderInfoLog(shader_fragment, size_info, NULL, info);
+    fprintf(stderr, "Failed to compile fragment shader: %s\n", info);
+    exit(EXIT_FAILURE);
+  }
+
+  printf("vertex: %s\n", data_vertex);
+  printf("fragment: %s\n", data_fragment);
+
+  free((void *)data_vertex);
+  free((void *)data_fragment);
 
   return 0;
 }
