@@ -41,6 +41,7 @@ process_events()
 void
 render_objects(float window_aspect)
 {
+  glClear(GL_COLOR_BUFFER_BIT);
   UNUSED(window_aspect);
 }
 
@@ -65,6 +66,7 @@ main(void)
   GLFWwindow * window = window_get(&window_aspect);
   GLuint id_camera = setup_objects();
   UNUSED(id_camera);
+  glClearColor(0.3f, 0.3f, 0.3f, 1.0f);
   while (!glfwWindowShouldClose(window)) {
     glfwPollEvents();
     process_events();
