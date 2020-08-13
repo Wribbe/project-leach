@@ -15,6 +15,14 @@ struct object {
   GLuint id_model;
 };
 
+extern GLuint vaos[];
+extern GLuint programs[];
+extern GLuint mat4_models[];
+
+extern GLuint id_vao_last;
+extern GLuint id_program_last;
+extern GLuint id_camera_current;
+
 char *
 file_read(const char * filepath);
 

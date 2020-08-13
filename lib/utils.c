@@ -4,7 +4,7 @@ GLuint vaos[NUM_OBJECTS] = {0};
 GLuint programs[NUM_OBJECTS] = {0};
 GLuint mat4_models[NUM_OBJECTS] = {0};
 
-GLuint id_vao_last= 0;
+GLuint id_vao_last = 0;
 GLuint id_program_last = 0;
 GLuint id_camera_current = 0;
 
