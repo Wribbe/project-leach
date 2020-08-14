@@ -6,8 +6,11 @@ GLuint mat4_models[NUM_OBJECTS] = {0};
 
 GLuint id_vao_last = 0;
 GLuint id_program_last = 0;
+GLuint id_object_last = 0;
+
 GLuint id_camera_current = 0;
 
+struct object objects[NUM_OBJECTS] = {0};
 
 char *
 file_read(const char * filepath)

@@ -23,6 +23,8 @@ extern GLuint id_vao_last;
 extern GLuint id_program_last;
 extern GLuint id_camera_current;
 
+extern struct object objects[];
+
 char *
 file_read(const char * filepath);
 
