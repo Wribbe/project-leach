@@ -4,9 +4,9 @@ GLuint vaos[NUM_OBJECTS] = {0};
 GLuint programs[NUM_OBJECTS] = {0};
 GLuint mat4_models[NUM_OBJECTS] = {0};
 
-GLuint id_vao_last = 0;
-GLuint id_program_last = 0;
-GLuint id_object_last = 0;
+GLuint id_last_vao = 0;
+GLuint id_last_program = 0;
+GLuint id_last_object = 0;
 
 GLuint id_camera_current = 0;
 
@@ -94,9 +94,9 @@ program_create(const char * path_vertex, const char * path_fragment)
   glDeleteShader(shader_vertex);
   glDeleteShader(shader_fragment);
 
-  programs[id_program_last] = id_program;
+  programs[id_last_program] = id_program;
 
-  return id_program_last++;
+  return id_last_program++;
 }
 
 void
