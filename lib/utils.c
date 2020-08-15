@@ -100,7 +100,8 @@ program_create(const char * path_vertex, const char * path_fragment)
 }
 
 void
-program_use(GLuint id_program) {
+program_use(GLuint id_program)
+{
   glUseProgram(programs[id_program]);
 }
 
