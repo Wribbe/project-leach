@@ -17,7 +17,7 @@ struct object {
 
 extern GLuint vaos[];
 extern GLuint programs[];
-extern GLuint mat4_models[];
+extern mat4 mat4_models[];
 
 extern struct object objects[];
 
@@ -31,4 +31,7 @@ void
 program_use(GLuint id_program);
 
 GLuint
-obj_create(GLuint id_program);
+obj_create(GLuint id_program, GLuint id_vao);
+
+GLuint
+vao_create(const char * filepath);

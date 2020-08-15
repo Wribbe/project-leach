@@ -54,8 +54,12 @@ setup_objects()
     "src/shaders/shader.frag"
   );
 
+  // Create VAO from cube.
+  GLuint id_vao = vao_create("res/cube.obj");
+
   // Setup camera object.
-  GLuint id_camera = obj_create(id_program);
+  GLuint id_camera = obj_create(id_program, id_vao);
+
   return id_camera;
 }
 

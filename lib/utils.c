@@ -2,7 +2,7 @@
 
 GLuint vaos[NUM_OBJECTS] = {0};
 GLuint programs[NUM_OBJECTS] = {0};
-GLuint mat4_models[NUM_OBJECTS] = {0};
+mat4 mat4_models[NUM_OBJECTS] = {0};
 
 GLuint id_last_vao = 0;
 GLuint id_last_program = 0;
@@ -106,8 +106,19 @@ program_use(GLuint id_program)
 }
 
 GLuint
-obj_create(GLuint id_program)
+obj_create(GLuint id_program, GLuint id_vao)
 {
-  UNUSED(id_program);
+  objects[id_last_object].id_vao = id_vao;
+  objects[id_last_object].id_program = id_program;
+  glm_mat4_identity(mat4_models[id_last_object]);
+  objects[id_last_object].id_model = id_last_object;
+  return id_last_object++;
+}
+
+
+GLuint
+vao_create(const char * filepath)
+{
+  UNUSED(filepath);
   return 0;
 }
